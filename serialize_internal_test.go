@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	xsd "github.com/faustbrian/golib/pkg/xsd"
+	xsd "github.com/faustbrian/go-xsd"
 )
 
 var errInjectedWrite = errors.New("injected XML write failure")

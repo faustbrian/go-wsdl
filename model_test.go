@@ -3,7 +3,7 @@ package wsdl_test
 import (
 	"testing"
 
-	wsdl "github.com/faustbrian/golib/pkg/wsdl"
+	wsdl "github.com/faustbrian/go-wsdl"
 )
 
 func TestNewDocument20CanonicalizesAndValidatesModel(t *testing.T) {

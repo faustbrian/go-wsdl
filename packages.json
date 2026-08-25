@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "repository": "github.com/faustbrian/go-wsdl",
+  "packages": [
+    {
+      "module_directory": ".",
+      "directory": ".",
+      "name": "wsdl",
+      "import_path": "github.com/faustbrian/go-wsdl",
+      "kind": "public",
+      "production": true,
+      "executable": true,
+      "coverage_required": true,
+      "build_required": true,
+      "build_tags": []
+    },
+    {
+      "module_directory": ".",
+      "directory": "builder",
+      "name": "builder",
+      "import_path": "github.com/faustbrian/go-wsdl/builder",
+      "kind": "public",
+      "production": true,
+      "executable": true,
+      "coverage_required": true,
+      "build_required": true,
+      "build_tags": []
+    },
+    {
+      "module_directory": ".",
+      "directory": "codegen",
+      "name": "codegen",
+      "import_path": "github.com/faustbrian/go-wsdl/codegen",
+      "kind": "public",
+      "production": true,
+      "executable": true,
+      "coverage_required": true,
+      "build_required": true,
+      "build_tags": []
+    },
+    {
+      "module_directory": ".",
+      "directory": "compile",
+      "name": "compile",
+      "import_path": "github.com/faustbrian/go-wsdl/compile",
+      "kind": "public",
+      "production": true,
+      "executable": true,
+      "coverage_required": true,
+      "build_required": true,
+      "build_tags": []
+    },
+    {
+      "module_directory": ".",
+      "directory": "compose",
+      "name": "compose",
+      "import_path": "github.com/faustbrian/go-wsdl/compose",
+      "kind": "public",
+      "production": true,
+      "executable": true,
+      "coverage_required": true,
+      "build_required": true,
+      "build_tags": []
+    },
+    {
+      "module_directory": ".",
+      "directory": "diff",
+      "name": "diff",
+      "import_path": "github.com/faustbrian/go-wsdl/diff",
+      "kind": "public",
+      "production": true,
+      "executable": true,
+      "coverage_required": true,
+      "build_required": true,
+      "build_tags": []
+    },
+    {
+      "module_directory": ".",
+      "directory": "resolve",
+      "name": "resolve",
+      "import_path": "github.com/faustbrian/go-wsdl/resolve",
+      "kind": "public",
+      "production": true,
+      "executable": true,
+      "coverage_required": true,
+      "build_required": true,
+      "build_tags": []
+    }
+  ]
+}

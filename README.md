@@ -1,5 +1,15 @@
 # wsdl
 
+[![CI](https://github.com/faustbrian/go-wsdl/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/faustbrian/go-wsdl/actions/workflows/ci.yml)
+[![CodeQL](https://img.shields.io/badge/CodeQL-required-blue)](https://github.com/faustbrian/go-wsdl/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/badge/coverage-100%25_required-blue)](CONTRIBUTING.md#verification)
+[![Mutation](https://img.shields.io/badge/mutation-100%25_required-blue)](CONTRIBUTING.md#verification)
+[![Documentation](https://img.shields.io/badge/docs-checked_in_CI-blue)](docs/)
+[![Go Reference](https://pkg.go.dev/badge/github.com/faustbrian/go-wsdl.svg)](https://pkg.go.dev/github.com/faustbrian/go-wsdl)
+[![Release](https://img.shields.io/github/v/release/faustbrian/go-wsdl?sort=semver)](https://github.com/faustbrian/go-wsdl/releases)
+[![Go](https://img.shields.io/badge/go-1.26.6-00ADD8?logo=go)](https://go.dev/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 `wsdl` is a bounded, deterministic WSDL 1.1 and WSDL 2.0 description
 toolkit for Go. It parses caller-supplied XML, preserves extension data and
 presence semantics, validates component references and bindings, resolves

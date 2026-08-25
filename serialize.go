@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/faustbrian/golib/pkg/wire/xmlwire"
+	"github.com/faustbrian/go-wire/xmlwire"
 )
 
 const defaultMaxOutputBytes int64 = 8 << 20

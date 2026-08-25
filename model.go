@@ -5,7 +5,7 @@ import (
 	"context"
 	"fmt"
 
-	xsd "github.com/faustbrian/golib/pkg/xsd"
+	xsd "github.com/faustbrian/go-xsd"
 )
 
 // Version identifies a supported WSDL language version.

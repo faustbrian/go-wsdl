@@ -5,7 +5,7 @@ import (
 	"encoding/xml"
 	"fmt"
 
-	xsd "github.com/faustbrian/golib/pkg/xsd"
+	xsd "github.com/faustbrian/go-xsd"
 )
 
 func decodeDefinitions11(root *xmlNode, state *parseState) (Definitions11, error) {

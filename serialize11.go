@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	xsd "github.com/faustbrian/golib/pkg/xsd"
+	xsd "github.com/faustbrian/go-xsd"
 )
 
 func (m marshalValue) definitions11(encoder tokenEncoder, value Definitions11) error {

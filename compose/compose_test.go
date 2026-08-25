@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	wsdl "github.com/faustbrian/golib/pkg/wsdl"
-	"github.com/faustbrian/golib/pkg/wsdl/compose"
-	xsd "github.com/faustbrian/golib/pkg/xsd"
+	wsdl "github.com/faustbrian/go-wsdl"
+	"github.com/faustbrian/go-wsdl/compose"
+	xsd "github.com/faustbrian/go-xsd"
 )
 
 func TestMergeWSDL20IsDeterministic(t *testing.T) {

@@ -7,10 +7,10 @@ import (
 	"sync"
 	"testing"
 
-	wsdl "github.com/faustbrian/golib/pkg/wsdl"
-	wsdlcompile "github.com/faustbrian/golib/pkg/wsdl/compile"
-	"github.com/faustbrian/golib/pkg/wsdl/resolve"
-	xsdresolve "github.com/faustbrian/golib/pkg/xsd/resolve"
+	wsdl "github.com/faustbrian/go-wsdl"
+	wsdlcompile "github.com/faustbrian/go-wsdl/compile"
+	"github.com/faustbrian/go-wsdl/resolve"
+	xsdresolve "github.com/faustbrian/go-xsd/resolve"
 )
 
 func TestCompilerResolvesBoundedWSDL20Graph(t *testing.T) {

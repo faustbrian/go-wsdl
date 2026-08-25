@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/faustbrian/golib/pkg/wire/xmlwire"
+	"github.com/faustbrian/go-wire/xmlwire"
 )
 
 const (

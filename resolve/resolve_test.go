@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/faustbrian/golib/pkg/wsdl/resolve"
+	"github.com/faustbrian/go-wsdl/resolve"
 )
 
 func TestMemoryReturnsOwnedResourceCopies(t *testing.T) {

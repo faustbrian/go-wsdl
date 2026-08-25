@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	wsdl "github.com/faustbrian/golib/pkg/wsdl"
+	wsdl "github.com/faustbrian/go-wsdl"
 )
 
 func TestParseWSDL20CoreDescription(t *testing.T) {

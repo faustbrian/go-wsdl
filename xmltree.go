@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/faustbrian/golib/pkg/xsd/datatype"
+	"github.com/faustbrian/go-xsd/datatype"
 )
 
 type xmlNode struct {

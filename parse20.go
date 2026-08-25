@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	xsd "github.com/faustbrian/golib/pkg/xsd"
+	xsd "github.com/faustbrian/go-xsd"
 )
 
 func decodeDescription20(

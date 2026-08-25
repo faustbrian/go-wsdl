@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	wsdl "github.com/faustbrian/golib/pkg/wsdl"
+	wsdl "github.com/faustbrian/go-wsdl"
 )
 
 var ErrDuplicateComponent = errors.New("wsdl builder: duplicate component")

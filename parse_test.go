@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	wsdl "github.com/faustbrian/golib/pkg/wsdl"
+	wsdl "github.com/faustbrian/go-wsdl"
 )
 
 func TestParseRecognizesWSDL11Definitions(t *testing.T) {

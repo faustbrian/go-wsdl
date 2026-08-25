@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	wsdl "github.com/faustbrian/golib/pkg/wsdl"
-	"github.com/faustbrian/golib/pkg/wsdl/resolve"
-	xsd "github.com/faustbrian/golib/pkg/xsd"
-	xsdcompile "github.com/faustbrian/golib/pkg/xsd/compile"
-	xsdresolve "github.com/faustbrian/golib/pkg/xsd/resolve"
+	wsdl "github.com/faustbrian/go-wsdl"
+	"github.com/faustbrian/go-wsdl/resolve"
+	xsd "github.com/faustbrian/go-xsd"
+	xsdcompile "github.com/faustbrian/go-xsd/compile"
+	xsdresolve "github.com/faustbrian/go-xsd/resolve"
 )
 
 func TestCompilerRejectsEveryNegativeSchemaLimit(t *testing.T) {
