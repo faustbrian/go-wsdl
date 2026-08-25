@@ -1,8 +1,8 @@
 github.com/BurntSushi/toml v1.6.0 h1:dRaEfpa2VI55EwlIW72hMRHdWouJeRF7TPYhI+AUQjk=
 github.com/BurntSushi/toml v1.6.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
-github.com/faustbrian/go-wire v1.0.0 h1:4YstDIl5zfIkOKWipRQap31rW0nWq7cfCv9TbW9h6RU=
+github.com/faustbrian/go-wire v1.0.0 h1:OSSvxeO8NIAHpf8P4T5H4nTR7Qjg76yw7wXqXogoc7Y=
 github.com/faustbrian/go-wire v1.0.0/go.mod h1:wcQnBeNpF6pw7vFhnBd0W9+qS7zlATxn2zuUae8aLyU=
-github.com/faustbrian/go-xsd v1.0.0 h1:AItvS8TrNn0KYdzZ4A15YuSy9ZnJDWaIdfRs8LljHQk=
+github.com/faustbrian/go-xsd v1.0.0 h1:sdoyO+U9kzss8tO4LTCkapTaju7Knf0C/FoQfFAeYlE=
 github.com/faustbrian/go-xsd v1.0.0/go.mod h1:q6DdYQdAPq3juU28b0AMz+Xnw9TA22Te5s7yQzW6f5s=
 github.com/fxamacker/cbor/v2 v2.9.2 h1:X4Ksno9+x3cz0TZv69ec1hxP/+tymuR8PXQJyDwfh78=
 github.com/fxamacker/cbor/v2 v2.9.2/go.mod h1:vM4b+DJCtHn+zz7h3FFp/hDAI9WNWCsZj23V5ytsSxQ=
