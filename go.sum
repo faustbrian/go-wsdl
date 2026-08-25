@@ -1,6 +1,6 @@
 github.com/BurntSushi/toml v1.6.0 h1:dRaEfpa2VI55EwlIW72hMRHdWouJeRF7TPYhI+AUQjk=
 github.com/BurntSushi/toml v1.6.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
-github.com/faustbrian/go-wire v1.0.0 h1:ddy/gR3xf2Wi7E7bq7jnCwIZVsxBbz2qVUQgwGZcdhA=
+github.com/faustbrian/go-wire v1.0.0 h1:5poQBP7xp1m7iLMLWxIaGWA72E0NKReeMmssnk+yQ6E=
 github.com/faustbrian/go-wire v1.0.0/go.mod h1:wcQnBeNpF6pw7vFhnBd0W9+qS7zlATxn2zuUae8aLyU=
 github.com/faustbrian/go-xsd v1.0.0 h1:FdW6oHa5CJlyVxdta7rzFPCst+9yeOkcrkhJBXnNrfw=
 github.com/faustbrian/go-xsd v1.0.0/go.mod h1:q6DdYQdAPq3juU28b0AMz+Xnw9TA22Te5s7yQzW6f5s=
