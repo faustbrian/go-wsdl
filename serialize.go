@@ -315,10 +315,9 @@ func namespaceAttributes(prefixes map[string]string) []xml.Attr {
 	}
 	bindings := make([]binding, 0, len(prefixes))
 	for namespace, prefix := range prefixes {
-		if namespace == "" || prefix == "" {
-			continue
+		if namespace != "" && prefix != "" {
+			bindings = append(bindings, binding{prefix: prefix, namespace: namespace})
 		}
-		bindings = append(bindings, binding{prefix: prefix, namespace: namespace})
 	}
 	sort.Slice(bindings, func(left, right int) bool {
 		return cmp.Compare(bindings[left].prefix, bindings[right].prefix) == -1
