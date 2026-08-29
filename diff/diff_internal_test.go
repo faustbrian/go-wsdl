@@ -92,13 +92,19 @@ func TestComparePartsReportsOnlyRemovalForMissingPart(t *testing.T) {
 	t.Parallel()
 
 	report := Report{}
-	compareParts("/parts", []wsdlcompile.Part{{
-		Name: "Removed", Element: wsdl.QName{Local: "Element"}, Type: wsdl.QName{Local: "Type"},
-	}}, nil, &report)
+	compareParts("/parts", []wsdlcompile.Part{
+		{Name: "RemovedA", Element: wsdl.QName{Local: "ElementA"}, Type: wsdl.QName{Local: "TypeA"}},
+		{Name: "RemovedB", Element: wsdl.QName{Local: "ElementB"}, Type: wsdl.QName{Local: "TypeB"}},
+	}, nil, &report)
 
-	if len(report.Changes) != 1 || report.Changes[0].Path != "/parts/Removed" ||
-		report.Changes[0].Kind != ChangeRemoved {
+	if len(report.Changes) != 2 {
 		t.Fatalf("changes = %#v", report.Changes)
+	}
+	assertChangePaths(t, report, "/parts/RemovedA", "/parts/RemovedB")
+	for _, change := range report.Changes {
+		if change.Kind != ChangeRemoved {
+			t.Fatalf("changes = %#v", report.Changes)
+		}
 	}
 }
 
