@@ -7,6 +7,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	xsd "github.com/faustbrian/go-xsd"
 )
@@ -43,6 +44,25 @@ func (w *boundedFailureWriter) Write(payload []byte) (int, error) {
 
 type countingTokenEncoder struct {
 	tokens int
+}
+
+func rawXMLErrorWithin(t *testing.T, payload []byte) error {
+	t.Helper()
+
+	result := make(chan error, 1)
+	go func() {
+		result <- encodeRawXML(&countingTokenEncoder{}, payload)
+	}()
+	timer := time.NewTimer(time.Second)
+	defer timer.Stop()
+
+	select {
+	case err := <-result:
+		return err
+	case <-timer.C:
+		t.Fatal("encodeRawXML() did not return for malformed XML")
+		return nil
+	}
 }
 
 func (e *countingTokenEncoder) EncodeToken(xml.Token) error {
@@ -741,7 +761,7 @@ func TestRawExtensionXMLNormalizesNamespaceDeclarations(t *testing.T) {
 	if len(start.Attr) != 1 || start.Attr[0].Name.Local != "xmlns:ext" || start.Attr[0].Value != "urn:ext" {
 		t.Fatalf("normalized attributes = %#v", start.Attr)
 	}
-	if err := encodeRawXML(&recordingTokenEncoder{}, []byte(`<extension>`)); err == nil {
+	if err := rawXMLErrorWithin(t, []byte(`<extension>`)); err == nil {
 		t.Fatal("encodeRawXML(malformed) error = nil")
 	}
 }
@@ -1212,7 +1232,7 @@ func TestSerializationHelpersRejectUnboundNamesAndUnsafeRawXML(t *testing.T) {
 	if _, err := value.qualifiedAttribute(nil, unbound, "value"); err == nil {
 		t.Fatal("qualifiedAttribute(unbound) error = nil")
 	}
-	if err := encodeRawXML(&countingTokenEncoder{}, []byte(`<broken`)); err == nil {
+	if err := rawXMLErrorWithin(t, []byte(`<broken`)); err == nil {
 		t.Fatal("encodeRawXML(malformed) error = nil")
 	}
 	if err := encodeRawXML(&countingTokenEncoder{}, []byte(`<!DOCTYPE extension>`)); !errors.Is(err, ErrDTDForbidden) {
