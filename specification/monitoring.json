@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "reviewed_at": "2026-08-30",
+  "review_interval_days": 30,
+  "authorities": [
+    {
+      "id": "wsdl-1.1-note",
+      "kind": "specification",
+      "version": "2001-03-15",
+      "url": "https://www.w3.org/TR/2001/NOTE-wsdl-20010315.html",
+      "sha256": "f1adcaa3774f20a5edb68014481f60930910ffc8aa764def9acb550aefe071fc",
+      "specifications": [
+        "WSDL 1.1 and 2.0"
+      ]
+    },
+    {
+      "id": "wsdl-2.0-core",
+      "kind": "specification",
+      "version": "2007-06-26",
+      "url": "https://www.w3.org/TR/2007/REC-wsdl20-20070626/",
+      "sha256": "f6379b0a686acc25e4665fa7509fd232fbbc1fc042b99a7d8f4ef6ce822d5390",
+      "specifications": [
+        "WSDL 1.1 and 2.0"
+      ]
+    },
+    {
+      "id": "wsdl-2.0-errata",
+      "kind": "errata",
+      "url": "https://www.w3.org/2007/06/wsdl20-errata.html",
+      "sha256": "03a10271ee1893d30258c33c06965b77560e438227a247031124843e315e4019",
+      "specifications": [
+        "WSDL 1.1 and 2.0"
+      ]
+    }
+  ]
+}
