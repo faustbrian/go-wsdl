@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Changed
+
+- Adopt the versioned shared `golib` repository contract while keeping WSDL
+  conformance, interoperability, mutation, and benchmark evidence in this
+  repository.
+
 ### Documentation
 
 - Remove the archived monorepo documentation link; package guidance remains in
