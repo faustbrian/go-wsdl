@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Changed
+
+- Adopt checksum-pinned `go-library-tools` v1.2.0 and its immutable workflow
+  so CI executes specification governance while keeping WSDL conformance,
+  interoperability, mutation, and benchmark evidence in this repository.
+
 ### Specification Decisions
 
 - WSDL11-DEC-001 sha256:d2f247795494ca3558fbc9474f453030b838be12a20d2e28a4f135bc932866e1: Govern [The 15 March 2001 Note is the WSDL 1.1 baseline](docs/specification-decisions.md).
