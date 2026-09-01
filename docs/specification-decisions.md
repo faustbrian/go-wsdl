@@ -29,6 +29,7 @@ changelog review when changed.
 | Public surface | `Parse`, `Document11`, WSDL 1.1 builders, validation, compilation, serialization, and comparison |
 | Upstream record | The Note and all reviewed WSDL 1.1 schema snapshots are independently pinned in the [manifest](../specification/manifest.tsv). |
 | Reconsider when | A separately complete WSDL feature line is added; the WSDL 1.1 baseline itself remains version-closed. |
+Machine contract: classification `ambiguity`; scope `normative`; specification `WSDL 1.1 and 2.0`; version `2001-03-15`; source authority `wsdl-1.1-note` (https://www.w3.org/TR/2001/NOTE-wsdl-20010315.html); requirement strength `not specified`; documentation `docs/specification-decisions.md`.
 
 ## WSDL11-DEC-002: Operation child order determines operation style
 
@@ -47,6 +48,7 @@ changelog review when changed.
 | Public surface | `Operation11.Style`, parsing, validation, compilation, semantic comparison, and serialization |
 | Upstream record | Requirement `WSDL11-CORE-002` maps the four normative forms to executable evidence. |
 | Reconsider when | Only a new WSDL version defines different operation categories; malformed 1.1 order remains an error. |
+Machine contract: classification `ambiguity`; scope `normative`; specification `WSDL 1.1 and 2.0`; version `2001-03-15`; source authority `wsdl-1.1-note` (https://www.w3.org/TR/2001/NOTE-wsdl-20010315.html); requirement strength `not specified`; documentation `docs/specification-decisions.md`.
 
 ## WSDL11-DEC-003: Binding extensions are description data, not runtime clients
 
@@ -65,6 +67,7 @@ changelog review when changed.
 | Public surface | WSDL 1.1 SOAP, HTTP, and MIME model types; parser; validator; compiler; serializer |
 | Upstream record | Requirements `WSDL11-SOAP-001`, `WSDL11-HTTP-001`, and `WSDL11-MIME-001` separate description support from transport execution. |
 | Reconsider when | Runtime generation belongs in a separate package with an explicit transport and credential threat model. |
+Machine contract: classification `ambiguity`; scope `defensive`; specification `WSDL 1.1 and 2.0`; version `2001-03-15`; source authority `wsdl-1.1-note` (https://www.w3.org/TR/2001/NOTE-wsdl-20010315.html); requirement strength `not specified`; documentation `docs/specification-decisions.md`.
 
 ## WSDL11-DEC-004: Overloaded operations use complete message identity
 
@@ -83,6 +86,7 @@ changelog review when changed.
 | Public surface | WSDL 1.1 validation, compiled operation lookup, binding resolution, and semantic diff |
 | Upstream record | The selected identity implements the default-name and overloading rules represented by `WSDL11-CORE-001` and `WSDL11-CORE-003`. |
 | Reconsider when | A published erratum defines a different complete identity or overloading is exposed through a versioned alternative API. |
+Machine contract: classification `omission`; scope `normative`; specification `WSDL 1.1 and 2.0`; version `2001-03-15`; source authority `wsdl-1.1-note` (https://www.w3.org/TR/2001/NOTE-wsdl-20010315.html); requirement strength `not specified`; documentation `docs/specification-decisions.md`.
 
 ## WSDL20-DEC-001: The 26 June 2007 Recommendations are the WSDL 2.0 baseline
 
@@ -101,6 +105,7 @@ changelog review when changed.
 | Public surface | `Parse`, `Description20`, WSDL 2.0 builders, validation, compilation, serialization, and comparison |
 | Upstream record | Core, Adjuncts, Additional MEPs, errata, schemas, and primer are pinned separately in the [manifest](../specification/manifest.tsv). |
 | Reconsider when | W3C publishes a superseding Recommendation or a separately complete feature line is intentionally added. |
+Machine contract: classification `ambiguity`; scope `normative`; specification `WSDL 1.1 and 2.0`; version `2007-06-26`; source authority `wsdl-2.0-core` (https://www.w3.org/TR/2007/REC-wsdl20-20070626/); requirement strength `not specified`; documentation `docs/specification-decisions.md`.
 
 ## WSDL20-DEC-002: Absent and explicitly defaulted values remain distinguishable
 
@@ -119,6 +124,7 @@ changelog review when changed.
 | Public surface | WSDL 2.0 message, SOAP, and HTTP model fields; parser; serializer; semantic diff |
 | Upstream record | Requirements `WSDL20-CONTENT-001`, `WSDL20-SOAP-001`, and `WSDL20-HTTP-001` retain the relevant evidence. |
 | Reconsider when | A separate normalized-view API is added; the lossless document model remains presence-aware. |
+Machine contract: classification `ambiguity`; scope `normative`; specification `WSDL 1.1 and 2.0`; version `2007-06-26`; source authority `wsdl-2.0-core` (https://www.w3.org/TR/2007/REC-wsdl20-20070626/); requirement strength `not specified`; documentation `docs/specification-decisions.md`.
 
 ## WSDL20-DEC-003: Unknown absolute message exchange patterns remain extensible
 
@@ -137,6 +143,7 @@ changelog review when changed.
 | Public surface | WSDL 2.0 interface operation models, validation, compilation, and serialization |
 | Upstream record | Requirement `WSDL20-MEP-001` distinguishes recognized Recommendation and Note patterns from extensible absolute IRIs. |
 | Reconsider when | A newly supported MEP receives an explicit identifier, semantic rule set, fixtures, and compatibility review. |
+Machine contract: classification `ambiguity`; scope `extension-specific`; specification `WSDL 1.1 and 2.0`; version `2007-06-26`; source authority `wsdl-2.0-core` (https://www.w3.org/TR/2007/REC-wsdl20-20070626/); requirement strength `not specified`; documentation `docs/specification-decisions.md`.
 
 ## WSDL20-DEC-004: RPC validation is split between WSDL and compiled XML Schema
 
@@ -155,6 +162,7 @@ changelog review when changed.
 | Public surface | `Validate`, `compile.Compiler`, WSDL 2.0 RPC models, diagnostics, and compiled operation metadata |
 | Upstream record | Requirement `WSDL20-STYLE-001` maps both local and compiled evidence to the same normative style. |
 | Reconsider when | The XSD contract changes or a standalone validation API is explicitly extended to require a caller-supplied compiled schema set. |
+Machine contract: classification `ambiguity`; scope `normative`; specification `WSDL 1.1 and 2.0`; version `2007-06-26`; source authority `wsdl-2.0-core` (https://www.w3.org/TR/2007/REC-wsdl20-20070626/); requirement strength `not specified`; documentation `docs/specification-decisions.md`.
 
 ## WSDL20-DEC-005: Operation safety accepts both published spellings and emits the normative one
 
@@ -173,6 +181,7 @@ changelog review when changed.
 | Public surface | WSDL 2.0 operation safety fields, parser, serializer, compiler, and semantic diff |
 | Upstream record | The prose/schema discrepancy is retained in [`specification/discrepancies-and-extensions.md`](../specification/discrepancies-and-extensions.md). |
 | Reconsider when | W3C publishes an erratum resolving the dated schema discrepancy. |
+Machine contract: classification `contradiction`; scope `recommended`; specification `WSDL 1.1 and 2.0`; version `2007-06-26`; source authority `wsdl-2.0-core` (https://www.w3.org/TR/2007/REC-wsdl20-20070626/); requirement strength `not specified`; documentation `docs/specification-decisions.md`.
 
 ## WSDL20-DEC-006: Operation style validation is split between WSDL and XML Schema
 
@@ -191,6 +200,7 @@ changelog review when changed.
 | Public surface | WSDL 2.0 operation style fields, validation, compilation, diagnostics, and generated models |
 | Upstream record | Requirement `WSDL20-STYLE-001` binds both validation phases to the same Adjuncts sections. |
 | Reconsider when | Style validation moves behind a different explicit schema-component contract without weakening either phase. |
+Machine contract: classification `ambiguity`; scope `normative`; specification `WSDL 1.1 and 2.0`; version `2007-06-26`; source authority `wsdl-2.0-core` (https://www.w3.org/TR/2007/REC-wsdl20-20070626/); requirement strength `not specified`; documentation `docs/specification-decisions.md`.
 
 ## WSDL-DEC-001: Normative prose outranks schemas, examples, fixtures, and peers
 
@@ -209,6 +219,7 @@ changelog review when changed.
 | Public surface | All parsing, validation, compilation, composition, serialization, generation, and comparison behavior |
 | Upstream record | Source role, version, status, digest, size, and URL are independently recorded in the [manifest](../specification/manifest.tsv). |
 | Reconsider when | A new erratum or minimized disagreement proves the selected reading conflicts with stronger normative text. |
+Machine contract: classification `contradiction`; scope `normative`; specification `WSDL 1.1 and 2.0`; version `2007-06-26`; source authority `wsdl-2.0-core` (https://www.w3.org/TR/2007/REC-wsdl20-20070626/); requirement strength `not specified`; documentation `docs/specification-decisions.md`.
 
 ## WSDL-DEC-002: Parsing performs no external resolution
 
@@ -227,6 +238,7 @@ changelog review when changed.
 | Public surface | `Parse`, import/include models, `resolve.Resolver`, `compile.New`, and `compile.Options` |
 | Upstream record | Requirements `WSDL11-RESOLVE-001` and `WSDL20-RESOLVE-001` distinguish lexical identity from injected resource loading. |
 | Reconsider when | A resolver adapter is added; parsing remains I/O-free unless the public ownership model is deliberately redesigned. |
+Machine contract: classification `ambiguity`; scope `defensive`; specification `WSDL 1.1 and 2.0`; version `2007-06-26`; source authority `wsdl-2.0-core` (https://www.w3.org/TR/2007/REC-wsdl20-20070626/); requirement strength `not specified`; documentation `docs/specification-decisions.md`.
 
 ## WSDL-DEC-003: DTDs, directives, and custom entity processing are rejected
 
@@ -245,6 +257,7 @@ changelog review when changed.
 | Public surface | `Parse`, extension preservation, `Marshal`, canonicalization, and all reader-backed parsing paths |
 | Upstream record | The defensive profile is documented in [`security.md`](security.md) and does not alter the pinned WSDL source bytes. |
 | Reconsider when | Any opt-in entity mode receives a separate threat model, bounded resolver contract, fixtures, and wire-compatibility review. |
+Machine contract: classification `ambiguity`; scope `extension-specific`; specification `WSDL 1.1 and 2.0`; version `2007-06-26`; source authority `wsdl-2.0-core` (https://www.w3.org/TR/2007/REC-wsdl20-20070626/); requirement strength `not specified`; documentation `docs/specification-decisions.md`.
 
 ## WSDL-DEC-004: Expanded QNames own identity and extensions remain opaque unless understood
 
@@ -263,6 +276,7 @@ changelog review when changed.
 | Public surface | `QName`, `Extensibility`, parser, validator options, compiler, composition, and serializer |
 | Upstream record | Every modeled extension boundary is listed in [`specification/discrepancies-and-extensions.md`](../specification/discrepancies-and-extensions.md). |
 | Reconsider when | A typed extension gains an explicit model and evidence; unknown extensions remain governed by this fallback contract. |
+Machine contract: classification `ambiguity`; scope `extension-specific`; specification `WSDL 1.1 and 2.0`; version `2007-06-26`; source authority `wsdl-2.0-core` (https://www.w3.org/TR/2007/REC-wsdl20-20070626/); requirement strength `not specified`; documentation `docs/specification-decisions.md`.
 
 ## WSDL-DEC-005: Serialization is deterministic and semantic, not lexically preserving
 
@@ -281,6 +295,7 @@ changelog review when changed.
 | Public surface | `Marshal`, marshal options, builders, composition, code-generation models, and semantic comparison |
 | Upstream record | Serialization behavior is documented in [`parsing-and-generation.md`](parsing-and-generation.md); no W3C canonical-WSDL claim is made. |
 | Reconsider when | A separately named XML canonicalization profile is added with exact normative rules and fixtures. |
+Machine contract: classification `implementation-defined behavior`; scope `recommended`; specification `WSDL 1.1 and 2.0`; version `2007-06-26`; source authority `wsdl-2.0-core` (https://www.w3.org/TR/2007/REC-wsdl20-20070626/); requirement strength `not specified`; documentation `docs/specification-decisions.md`.
 
 ## WSDL-DEC-006: All parsing, compilation, validation, and output work is explicitly bounded
 
@@ -299,6 +314,7 @@ changelog review when changed.
 | Public surface | Parse, validation, compilation, resolver, code-generation, and marshal option limits; diagnostics and errors |
 | Upstream record | The complete limit inventory and threat boundary are maintained in [`security.md`](security.md). |
 | Reconsider when | A new processing phase or collection is added; it must receive a limit and exact-boundary evidence before release. |
+Machine contract: classification `ambiguity`; scope `defensive`; specification `WSDL 1.1 and 2.0`; version `2007-06-26`; source authority `wsdl-2.0-core` (https://www.w3.org/TR/2007/REC-wsdl20-20070626/); requirement strength `not specified`; documentation `docs/specification-decisions.md`.
 
 ## WSDL-DEC-007: Conformance and interoperability claims remain attributable
 
@@ -317,6 +333,7 @@ changelog review when changed.
 | Public surface | Conformance documentation, requirement matrices, interoperability gate, parsing, validation, compilation, and serialization claims |
 | Upstream record | Source and tool pins are maintained in `manifest.tsv`, `interoperability.tsv`, and `tooling.tsv`; Woden execution is documented in [`interoperability.md`](interoperability.md). |
 | Reconsider when | A corpus, peer, tool version, applicability rule, requirement row, or source pin changes. |
+Machine contract: classification `interoperability policy`; scope `recommended`; specification `WSDL 1.1 and 2.0`; version `2007-06-26`; source authority `wsdl-2.0-core` (https://www.w3.org/TR/2007/REC-wsdl20-20070626/); requirement strength `not specified`; documentation `docs/specification-decisions.md`.
 
 ## WSDL-DEC-008: The package models descriptions and never owns service execution
 
@@ -335,6 +352,7 @@ changelog review when changed.
 | Public surface | Entire `wsdl` module, especially `compile`, `codegen`, SOAP and HTTP binding models, and resolver contracts |
 | Upstream record | The package boundary is stated in the module README and the versioned requirement matrices intentionally contain no transport-execution claim. |
 | Reconsider when | Never by silently expanding this module; a runtime client requires a separate package and explicit lifecycle and security goals. |
+Machine contract: classification `omission`; scope `application-policy`; specification `WSDL 1.1 and 2.0`; version `2007-06-26`; source authority `wsdl-2.0-core` (https://www.w3.org/TR/2007/REC-wsdl20-20070626/); requirement strength `not specified`; documentation `docs/specification-decisions.md`.
 
 ## Unresolved and excluded behavior
 

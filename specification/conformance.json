@@ -1,0 +1,507 @@
+{
+  "schema_version": 1,
+  "decisions": [
+    {
+      "id": "WSDL11-DEC-001",
+      "authoritative_sources": [
+        "wsdl-1.1-note"
+      ],
+      "executable_evidence": [
+        "TestParseRecognizesWSDL11Definitions",
+        "TestParseWSDL11CoreAndSOAPDescription",
+        "TestExternalWSDL11InteroperabilityCorpus"
+      ],
+      "fixtures": [
+
+      ],
+      "fuzz": [
+
+      ],
+      "interoperability_evidence": [
+
+      ],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": [
+
+      ],
+      "differential_classification": "not assessed",
+      "public_behavior": [
+        "The dated 15 March 2001 Note and reviewed schema snapshots define WSDL 1.1. SOAP 1.2 binding support is an explicit adjunct and does not alter core 1.1 semantics."
+      ]
+    },
+    {
+      "id": "WSDL11-DEC-002",
+      "authoritative_sources": [
+        "wsdl-1.1-note"
+      ],
+      "executable_evidence": [
+        "TestOperationStyle11RecognizesEveryMessageOrder",
+        "TestParseWSDL11PreservesSolicitResponseOperationOrder",
+        "TestWSDL11SolicitResponseSerializesOutputBeforeInput"
+      ],
+      "fixtures": [
+
+      ],
+      "fuzz": [
+
+      ],
+      "interoperability_evidence": [
+
+      ],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": [
+
+      ],
+      "differential_classification": "not assessed",
+      "public_behavior": [
+        "Parsing records one-way, request-response, solicit-response, or notification style from child presence and order. Validation rejects inconsistent models, and serialization emits the order required by the retained style."
+      ]
+    },
+    {
+      "id": "WSDL11-DEC-003",
+      "authoritative_sources": [
+        "wsdl-1.1-note"
+      ],
+      "executable_evidence": [
+        "TestParseWSDL11HTTPAndMIMEBindings",
+        "TestValidateWSDL11BindingProtocolProperties",
+        "TestSOAP12HeadersFaultsAndActionPresenceRoundTrip"
+      ],
+      "fixtures": [
+
+      ],
+      "fuzz": [
+
+      ],
+      "interoperability_evidence": [
+
+      ],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": [
+
+      ],
+      "differential_classification": "not assessed",
+      "public_behavior": [
+        "SOAP, HTTP, and MIME extensions are parsed, preserved, validated, compiled, and serialized as description data. This package never acquires credentials, creates requests, or invokes an endpoint."
+      ]
+    },
+    {
+      "id": "WSDL11-DEC-004",
+      "authoritative_sources": [
+        "wsdl-1.1-note"
+      ],
+      "executable_evidence": [
+        "TestValidateWSDL11ResolvesOverloadedBindingOperation",
+        "TestValidateWSDL11RejectsAmbiguousBindingOperation",
+        "TestCompilerPreservesWSDL11OverloadedOperationIdentity"
+      ],
+      "fixtures": [
+
+      ],
+      "fuzz": [
+
+      ],
+      "interoperability_evidence": [
+
+      ],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": [
+
+      ],
+      "differential_classification": "not assessed",
+      "public_behavior": [
+        "Binding resolution and compiled identity use operation name plus effective input and output message-reference names. An indistinguishable overload is rejected as ambiguous instead of selected by document order."
+      ]
+    },
+    {
+      "id": "WSDL20-DEC-001",
+      "authoritative_sources": [
+        "wsdl-2.0-core"
+      ],
+      "executable_evidence": [
+        "TestParseRecognizesWSDL20Description",
+        "TestValidateWSDL20PredefinedMessageExchangePatterns",
+        "TestAcceptedW3CWSDL20FixturesParseCompileAndRoundTrip"
+      ],
+      "fixtures": [
+
+      ],
+      "fuzz": [
+
+      ],
+      "interoperability_evidence": [
+
+      ],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": [
+
+      ],
+      "differential_classification": "not assessed",
+      "public_behavior": [
+        "Dated Core and Adjuncts Recommendations are normative. Additional MEPs are supported as named patterns while retaining the Note's non-normative status. The primer and examples are informative evidence only."
+      ]
+    },
+    {
+      "id": "WSDL20-DEC-002",
+      "authoritative_sources": [
+        "wsdl-2.0-core"
+      ],
+      "executable_evidence": [
+        "TestWSDL20MessageContentModelsRoundTrip",
+        "TestWSDL20OperationSafetyRoundTripsWithPresence",
+        "TestCompareMessageCoversPresencePropertiesAndParts"
+      ],
+      "fixtures": [
+
+      ],
+      "fuzz": [
+
+      ],
+      "interoperability_evidence": [
+
+      ],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": [
+
+      ],
+      "differential_classification": "not assessed",
+      "public_behavior": [
+        "Defaultable SOAP and HTTP properties retain presence flags. Message content models retain whether `element` was absent even when its effective value is `#other`."
+      ]
+    },
+    {
+      "id": "WSDL20-DEC-003",
+      "authoritative_sources": [
+        "wsdl-2.0-core"
+      ],
+      "executable_evidence": [
+        "TestValidateWSDL20PredefinedMessageExchangePatterns",
+        "TestValidateWSDL20CustomPatternMessageLabels",
+        "TestWSDL20InitialMessageFollowsPredefinedMEPDirection"
+      ],
+      "fixtures": [
+
+      ],
+      "fuzz": [
+
+      ],
+      "interoperability_evidence": [
+
+      ],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": [
+
+      ],
+      "differential_classification": "not assessed",
+      "public_behavior": [
+        "Every pattern identifier must be absolute. Direction and label rules are enforced for the eight recognized patterns; an unknown absolute identifier remains valid and its explicit message references are preserved."
+      ]
+    },
+    {
+      "id": "WSDL20-DEC-004",
+      "authoritative_sources": [
+        "wsdl-2.0-core"
+      ],
+      "executable_evidence": [
+        "TestValidateWSDL20RPCStyleRules",
+        "TestCompilerRejectsInvalidWSDL20RPCSchemas",
+        "TestCompilerPreservesWSDL20RPCSignature"
+      ],
+      "fixtures": [
+
+      ],
+      "fuzz": [
+
+      ],
+      "interoperability_evidence": [
+
+      ],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": [
+
+      ],
+      "differential_classification": "not assessed",
+      "public_behavior": [
+        "Local validation owns RPC style, MEP, wrapper-reference, and signature rules requiring only WSDL. Compilation owns wrapper sequence, particle, attribute, named-type, and parameter mapping rules requiring immutable `xsd` components."
+      ]
+    },
+    {
+      "id": "WSDL20-DEC-005",
+      "authoritative_sources": [
+        "wsdl-2.0-core"
+      ],
+      "executable_evidence": [
+        "TestWSDL20OperationSafetyRoundTripsWithPresence",
+        "TestWSDL20RejectsInvalidBooleanAtEveryAdjunctBoundary",
+        "TestCompareDetectsWSDL20OperationSafetyChange"
+      ],
+      "fixtures": [
+
+      ],
+      "fuzz": [
+
+      ],
+      "interoperability_evidence": [
+
+      ],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": [
+
+      ],
+      "differential_classification": "not assessed",
+      "public_behavior": [
+        "Parsing accepts either spelling, rejects simultaneous use, records presence independently, and deterministic serialization emits the normative Adjuncts `wsdlx:safe` spelling."
+      ]
+    },
+    {
+      "id": "WSDL20-DEC-006",
+      "authoritative_sources": [
+        "wsdl-2.0-core"
+      ],
+      "executable_evidence": [
+        "TestValidateWSDL20IRIAndMultipartStylesRequireElementInitialMessage",
+        "TestCompilerValidatesWSDL20IRIAndMultipartStyleSchemas",
+        "TestIRISimpleTypeRulesCoverInlineAndBuiltInTypes"
+      ],
+      "fixtures": [
+
+      ],
+      "fuzz": [
+
+      ],
+      "interoperability_evidence": [
+
+      ],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": [
+
+      ],
+      "differential_classification": "not assessed",
+      "public_behavior": [
+        "Local validation enforces style IRI, initial-message content model, and wrapper name. Compilation enforces complex sequence, local-child, attribute, simple-type, occurrence, and uniqueness requirements."
+      ]
+    },
+    {
+      "id": "WSDL-DEC-001",
+      "authoritative_sources": [
+        "wsdl-2.0-core"
+      ],
+      "executable_evidence": [
+        "TestAcceptedW3CWSDL20FixturesParseCompileAndRoundTrip",
+        "TestExternalWSDL11InteroperabilityCorpus",
+        "TestParseRejectsMalformedWSDL20AtEveryNestedDecoderBoundary"
+      ],
+      "fixtures": [
+
+      ],
+      "fuzz": [
+
+      ],
+      "interoperability_evidence": [
+
+      ],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": [
+
+      ],
+      "differential_classification": "not assessed",
+      "public_behavior": [
+        "Dated normative prose plus published errata controls. Schemas constrain syntax only where assigned that role. Notes, primers, examples, fixtures, and peers are evidence and never silently override stronger text or merge version semantics."
+      ]
+    },
+    {
+      "id": "WSDL-DEC-002",
+      "authoritative_sources": [
+        "wsdl-2.0-core"
+      ],
+      "executable_evidence": [
+        "TestParseWSDL11ImportResolvesURIWithoutLoading",
+        "TestParseWSDL20ImportAndIncludeResolveURIsWithoutLoading",
+        "TestCompilerDefaultsToDeniedResolution"
+      ],
+      "fixtures": [
+
+      ],
+      "fuzz": [
+
+      ],
+      "interoperability_evidence": [
+
+      ],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": [
+
+      ],
+      "differential_classification": "not assessed",
+      "public_behavior": [
+        "Parsing resolves URI references lexically against explicit base identity but loads nothing. Compilation uses only the injected resolver; the default resolver denies access, and schema resolution uses a separately injected XSD resolver."
+      ]
+    },
+    {
+      "id": "WSDL-DEC-003",
+      "authoritative_sources": [
+        "wsdl-2.0-core"
+      ],
+      "executable_evidence": [
+        "TestParseRejectsGeneralXMLAndResourceBoundaries",
+        "TestSerializationHelpersRejectUnboundNamesAndUnsafeRawXML"
+      ],
+      "fixtures": [
+
+      ],
+      "fuzz": [
+        "FuzzParseRoundTrip"
+      ],
+      "interoperability_evidence": [
+
+      ],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": [
+
+      ],
+      "differential_classification": "not assessed",
+      "public_behavior": [
+        "Parsing rejects DTDs and directives and never expands custom entities. Serialization also rejects unsafe directive-bearing raw extension XML. This is an explicit defensive profile, not a WSDL-mandated claim."
+      ]
+    },
+    {
+      "id": "WSDL-DEC-004",
+      "authoritative_sources": [
+        "wsdl-2.0-core"
+      ],
+      "executable_evidence": [
+        "TestParsePreservesWSDL11ExtensionElementsAndAttributes",
+        "TestWSDL20ExtensionsRoundTripAcrossComponents",
+        "TestValidateRequiresExplicitExtensionUnderstanding"
+      ],
+      "fixtures": [
+
+      ],
+      "fuzz": [
+
+      ],
+      "interoperability_evidence": [
+
+      ],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": [
+
+      ],
+      "differential_classification": "not assessed",
+      "public_behavior": [
+        "Component and attribute identity uses namespace URI plus local name. Unknown optional extensions remain opaque bounded data. A required extension is valid only when its expanded QName is explicitly listed as understood, including nested boundaries."
+      ]
+    },
+    {
+      "id": "WSDL-DEC-005",
+      "authoritative_sources": [
+        "wsdl-2.0-core"
+      ],
+      "executable_evidence": [
+        "TestMarshalWSDL11IsDeterministicAndRoundTrips",
+        "TestMarshalWSDL20IsDeterministicAndRoundTrips",
+        "TestSerializerAssignsTargetAndSchemaPreferredPrefixesForBothVersions"
+      ],
+      "fixtures": [
+
+      ],
+      "fuzz": [
+
+      ],
+      "interoperability_evidence": [
+
+      ],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": [
+
+      ],
+      "differential_classification": "not assessed",
+      "public_behavior": [
+        "Serialization emits stable package-selected prefixes, attributes, components, operation direction, extension payloads, and optional formatting. Parse-serialize-parse preserves model semantics; byte identity with the source is not promised."
+      ]
+    },
+    {
+      "id": "WSDL-DEC-006",
+      "authoritative_sources": [
+        "wsdl-2.0-core"
+      ],
+      "executable_evidence": [
+        "TestParseEnforcesComponentLimitsBeforeModelConstruction",
+        "TestCompilerAcceptsGraphsAtEveryExactResourceLimit",
+        "TestMarshalLimitAppliesAtEveryOutputBoundary"
+      ],
+      "fixtures": [
+
+      ],
+      "fuzz": [
+
+      ],
+      "interoperability_evidence": [
+
+      ],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": [
+
+      ],
+      "differential_classification": "not assessed",
+      "public_behavior": [
+        "Parsing, validation, compilation, code generation, and serialization enforce finite bytes, depth, nodes, attributes, text, components, references, schemas, graph depth, diagnostics, and output limits. Context cancellation is observed where work can block or traverse."
+      ]
+    },
+    {
+      "id": "WSDL-DEC-007",
+      "authoritative_sources": [
+        "wsdl-2.0-core"
+      ],
+      "executable_evidence": [
+        "TestExternalWSDL11InteroperabilityCorpus",
+        "TestAcceptedW3CWSDL20FixturesParseCompileAndRoundTrip"
+      ],
+      "fixtures": [
+
+      ],
+      "fuzz": [
+        "FuzzModelRoundTrip"
+      ],
+      "interoperability_evidence": [
+
+      ],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": [
+
+      ],
+      "differential_classification": "not assessed",
+      "public_behavior": [
+        "Versioned requirement and assertion matrices own normative claims. W3C fixtures and Woden results remain WSDL 2.0 evidence; SoapUI, .NET, CXF, and carrier fixtures remain WSDL 1.1 interoperability evidence. Missing tools or failed cases never count as passes."
+      ]
+    },
+    {
+      "id": "WSDL-DEC-008",
+      "authoritative_sources": [
+        "wsdl-2.0-core"
+      ],
+      "executable_evidence": [
+        "TestBuildCreatesOwnedDeterministicGenerationModel",
+        "TestCompilerUsesOnlyInjectedSchemaResolver",
+        "TestMemoryReturnsOwnedResourceCopies"
+      ],
+      "fixtures": [
+
+      ],
+      "fuzz": [
+
+      ],
+      "interoperability_evidence": [
+
+      ],
+      "interoperability_classification": "not assessed",
+      "differential_evidence": [
+
+      ],
+      "differential_classification": "not assessed",
+      "public_behavior": [
+        "The package parses, validates, resolves through injected seams, compiles, composes, compares, serializes, and produces bounded generation models. `wire` owns SOAP envelopes and callers own transport, credentials, retries, telemetry, and endpoint policy."
+      ]
+    }
+  ]
+}

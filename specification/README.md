@@ -38,3 +38,26 @@ source revision, local path, digest, size, and URL. Offline provenance checks
 verify local bytes; remote verification checks the upstream objects too.
 `tooling.tsv` pins downloaded interoperability tools and their dependencies by
 version, license, digest, size, and immutable artifact URL.
+
+## Decision conformance matrix
+
+| Decision | Title | Evidence |
+| --- | --- | --- |
+| WSDL11-DEC-001 | The 15 March 2001 Note is the WSDL 1.1 baseline | `TestParseRecognizesWSDL11Definitions`, `TestParseWSDL11CoreAndSOAPDescription`, `TestExternalWSDL11InteroperabilityCorpus` |
+| WSDL11-DEC-002 | Operation child order determines operation style | `TestOperationStyle11RecognizesEveryMessageOrder`, `TestParseWSDL11PreservesSolicitResponseOperationOrder`, `TestWSDL11SolicitResponseSerializesOutputBeforeInput` |
+| WSDL11-DEC-003 | Binding extensions are description data, not runtime clients | `TestParseWSDL11HTTPAndMIMEBindings`, `TestValidateWSDL11BindingProtocolProperties`, `TestSOAP12HeadersFaultsAndActionPresenceRoundTrip` |
+| WSDL11-DEC-004 | Overloaded operations use complete message identity | `TestValidateWSDL11ResolvesOverloadedBindingOperation`, `TestValidateWSDL11RejectsAmbiguousBindingOperation`, `TestCompilerPreservesWSDL11OverloadedOperationIdentity` |
+| WSDL20-DEC-001 | The 26 June 2007 Recommendations are the WSDL 2.0 baseline | `TestParseRecognizesWSDL20Description`, `TestValidateWSDL20PredefinedMessageExchangePatterns`, `TestAcceptedW3CWSDL20FixturesParseCompileAndRoundTrip` |
+| WSDL20-DEC-002 | Absent and explicitly defaulted values remain distinguishable | `TestWSDL20MessageContentModelsRoundTrip`, `TestWSDL20OperationSafetyRoundTripsWithPresence`, `TestCompareMessageCoversPresencePropertiesAndParts` |
+| WSDL20-DEC-003 | Unknown absolute message exchange patterns remain extensible | `TestValidateWSDL20PredefinedMessageExchangePatterns`, `TestValidateWSDL20CustomPatternMessageLabels`, `TestWSDL20InitialMessageFollowsPredefinedMEPDirection` |
+| WSDL20-DEC-004 | RPC validation is split between WSDL and compiled XML Schema | `TestValidateWSDL20RPCStyleRules`, `TestCompilerRejectsInvalidWSDL20RPCSchemas`, `TestCompilerPreservesWSDL20RPCSignature` |
+| WSDL20-DEC-005 | Operation safety accepts both published spellings and emits the normative one | `TestWSDL20OperationSafetyRoundTripsWithPresence`, `TestWSDL20RejectsInvalidBooleanAtEveryAdjunctBoundary`, `TestCompareDetectsWSDL20OperationSafetyChange` |
+| WSDL20-DEC-006 | Operation style validation is split between WSDL and XML Schema | `TestValidateWSDL20IRIAndMultipartStylesRequireElementInitialMessage`, `TestCompilerValidatesWSDL20IRIAndMultipartStyleSchemas`, `TestIRISimpleTypeRulesCoverInlineAndBuiltInTypes` |
+| WSDL-DEC-001 | Normative prose outranks schemas, examples, fixtures, and peers | `TestAcceptedW3CWSDL20FixturesParseCompileAndRoundTrip`, `TestExternalWSDL11InteroperabilityCorpus`, `TestParseRejectsMalformedWSDL20AtEveryNestedDecoderBoundary` |
+| WSDL-DEC-002 | Parsing performs no external resolution | `TestParseWSDL11ImportResolvesURIWithoutLoading`, `TestParseWSDL20ImportAndIncludeResolveURIsWithoutLoading`, `TestCompilerDefaultsToDeniedResolution` |
+| WSDL-DEC-003 | DTDs, directives, and custom entity processing are rejected | `TestParseRejectsGeneralXMLAndResourceBoundaries`, `TestSerializationHelpersRejectUnboundNamesAndUnsafeRawXML` |
+| WSDL-DEC-004 | Expanded QNames own identity and extensions remain opaque unless understood | `TestParsePreservesWSDL11ExtensionElementsAndAttributes`, `TestWSDL20ExtensionsRoundTripAcrossComponents`, `TestValidateRequiresExplicitExtensionUnderstanding` |
+| WSDL-DEC-005 | Serialization is deterministic and semantic, not lexically preserving | `TestMarshalWSDL11IsDeterministicAndRoundTrips`, `TestMarshalWSDL20IsDeterministicAndRoundTrips`, `TestSerializerAssignsTargetAndSchemaPreferredPrefixesForBothVersions` |
+| WSDL-DEC-006 | All parsing, compilation, validation, and output work is explicitly bounded | `TestParseEnforcesComponentLimitsBeforeModelConstruction`, `TestCompilerAcceptsGraphsAtEveryExactResourceLimit`, `TestMarshalLimitAppliesAtEveryOutputBoundary` |
+| WSDL-DEC-007 | Conformance and interoperability claims remain attributable | `TestExternalWSDL11InteroperabilityCorpus`, `TestAcceptedW3CWSDL20FixturesParseCompileAndRoundTrip` |
+| WSDL-DEC-008 | The package models descriptions and never owns service execution | `TestBuildCreatesOwnedDeterministicGenerationModel`, `TestCompilerUsesOnlyInjectedSchemaResolver`, `TestMemoryReturnsOwnedResourceCopies` |
