@@ -4,6 +4,10 @@
 
 ### Changed
 
+- Adopt the `go-library-tools` v1.3.0 schema-v2 cohesion contract, local
+  `make cohesion` gate, and immutable reusable CI workflow without changing
+  the WSDL API or runtime behavior.
+
 - Adopt checksum-pinned `go-library-tools` v1.2.0 and its immutable workflow
   so CI executes specification governance while keeping WSDL conformance,
   interoperability, mutation, and benchmark evidence in this repository.
@@ -30,6 +34,9 @@
 - WSDL-DEC-008 sha256:fc0330be7640d488fd01a99f39ea6c7c6f660ab7cb3b5dbc13ffa3891d99a15e: Govern [The package models descriptions and never owns service execution](docs/specification-decisions.md).
 
 ### Documentation
+
+- Publish the module's family, capabilities, ownership, lifecycle, supported
+  environments, package-selection guidance, and immutable ecosystem links.
 
 - Remove the archived monorepo documentation link; package guidance remains in
   the repository-owned documentation.
