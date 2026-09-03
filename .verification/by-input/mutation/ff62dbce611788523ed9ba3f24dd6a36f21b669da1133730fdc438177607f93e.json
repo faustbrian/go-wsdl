@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "repository": "github.com/faustbrian/go-wsdl",
+  "module": ".",
+  "package": "compile",
+  "gate": "mutation",
+  "input_digest": "sha256:ff62dbce611788523ed9ba3f24dd6a36f21b669da1133730fdc438177607f93e",
+  "verifier_digest": "sha256:9a9499ff68a8dfd49a0be7995590297a8ee563a1aa226bfd8b9361dc53058108",
+  "result": "passed",
+  "report_digest": "sha256:09c17b2cf7a4c2af6fc9489be238914ae23921ba21411eb9f00dbc8c22810974",
+  "environment": {
+    "CGO_ENABLED": "1",
+    "GOARCH": "arm64",
+    "GOOS": "darwin",
+    "GOVERSION": "go1.26.6",
+    "gremlins_binary_sha256": "sha256:e05bf25d661b16ab96d6f2e17aed481d393930e0f24205cc341b010f887368a0"
+  },
+  "completed_at": "2026-09-03T14:51:08.551834Z"
+}

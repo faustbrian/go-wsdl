@@ -4,9 +4,13 @@
 
 ### Changed
 
-- Adopt the `go-library-tools` v1.3.0 schema-v2 cohesion contract, local
+- Adopt the `go-library-tools` v1.4.0 schema-v2 cohesion contract, local
   `make cohesion` gate, and immutable reusable CI workflow without changing
   the WSDL API or runtime behavior.
+
+- Resolve the existing `go-wire` and `go-xsd` v1.0.0 requirements from their
+  public Go proxy and checksum-database identities after the shared bootstrap
+  proxy was made fallback-only.
 
 - Adopt checksum-pinned `go-library-tools` v1.2.0 and its immutable workflow
   so CI executes specification governance while keeping WSDL conformance,
@@ -34,6 +38,9 @@
 - WSDL-DEC-008 sha256:fc0330be7640d488fd01a99f39ea6c7c6f660ab7cb3b5dbc13ffa3891d99a15e: Govern [The package models descriptions and never owns service execution](docs/specification-decisions.md).
 
 ### Documentation
+
+- Record the public module identity review for the WSDL module's two owned
+  dependencies.
 
 - Publish the module's family, capabilities, ownership, lifecycle, supported
   environments, package-selection guidance, and immutable ecosystem links.
