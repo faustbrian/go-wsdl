@@ -29,6 +29,18 @@ const strictDefinitions11Prefix = `<definitions xmlns="http://schemas.xmlsoap.or
 
 const invalidRequiredExtension11 = `<ext:invalid wsdl:required="invalid"/>`
 
+func TestExtensionSelectionRejectsCoreNamespaceBeforeParserTests(t *testing.T) {
+	core := &xmlNode{name: xml.Name{Space: NamespaceWSDL20, Local: "core"}}
+	skipped := &xmlNode{name: xml.Name{Space: "urn:skip", Local: "skipped"}}
+	preserved := &xmlNode{name: xml.Name{Space: "urn:keep", Local: "preserved"}}
+
+	if shouldDecodeExtension(core, NamespaceWSDL20, nil) ||
+		shouldDecodeExtension(skipped, NamespaceWSDL20, func(*xmlNode) bool { return true }) ||
+		!shouldDecodeExtension(preserved, NamespaceWSDL20, nil) {
+		t.Fatal("extension selection classified a child incorrectly")
+	}
+}
+
 func TestParseRejectsMalformedWSDL20AtEveryNestedDecoderBoundary(t *testing.T) {
 	t.Parallel()
 
@@ -612,10 +624,5 @@ func TestExtensibilitySelectionDistinguishesCoreSkippedAndPreservedChildren(t *t
 	}
 	if len(value.Extensions) != 1 || value.Extensions[0].Name != (QName{Namespace: "urn:keep", Local: "preserved"}) {
 		t.Fatalf("extensions = %#v", value.Extensions)
-	}
-	if shouldDecodeExtension(core, NamespaceWSDL20, nil) ||
-		shouldDecodeExtension(skipped, NamespaceWSDL20, func(*xmlNode) bool { return true }) ||
-		!shouldDecodeExtension(preserved, NamespaceWSDL20, nil) {
-		t.Fatal("extension selection classified a child incorrectly")
 	}
 }

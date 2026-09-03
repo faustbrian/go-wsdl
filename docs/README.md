@@ -17,5 +17,6 @@
 - [Interoperability](interoperability.md)
 - [Performance](performance.md)
 - [Migration](migration.md)
+- [Module identity reviews](module-identity-reviews.md)
 - [Cookbook](cookbook.md)
 - [FAQ](faq.md)
