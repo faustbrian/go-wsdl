@@ -20,6 +20,22 @@ It is deliberately not a SOAP client. `wire` owns SOAP envelope primitives,
 `xsd` owns schema compilation, and transport belongs in `http-client` or
 another consumer.
 
+## Status
+
+The module has a stable v1 API and supports Go 1.26.6 or later.
+
+## Installation
+
+```sh
+go get github.com/faustbrian/go-wsdl
+```
+
+Import only the packages your application uses. The root `wsdl` package owns
+document parsing, validation, and shared description types; `compile` owns
+explicit resource resolution and immutable compiled graphs.
+
+## Quick start
+
 ```go
 compiler, err := compile.New(compile.Options{}) // resolution denied by default
 if err != nil {
@@ -35,6 +51,10 @@ if err != nil {
 service, ok := set.Service(wsdl.QName{Namespace: "urn:example", Local: "API"})
 ```
 
+See the [compiler-checked example](example_test.go) for a complete standalone
+parse and inspection flow. The [package map](docs/README.md) routes advanced
+compilation, composition, code generation, and compatibility use cases.
+
 The [documentation](docs/README.md) covers the model, security boundaries,
 version-specific conformance, builders, composition, code generation,
 interoperability, and release evidence. Observable specification choices are
@@ -49,7 +69,8 @@ and its
 
 ## Stability
 
-The API is pre-1.0. Supported behavior is recorded independently in the
+The stable v1 API follows semantic versioning. Supported behavior is recorded
+independently in the
 [WSDL 1.1 matrix](specification/requirements/wsdl-1.1.tsv) and
 [WSDL 2.0 matrix](specification/requirements/wsdl-2.0.tsv). Matrix rows marked
 `partial` or `missing` are not conformance claims.

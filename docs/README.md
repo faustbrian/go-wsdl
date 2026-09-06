@@ -1,5 +1,7 @@
 # Documentation
 
+- [API reference](https://pkg.go.dev/github.com/faustbrian/go-wsdl)
+- [Compiler-checked example](../example_test.go)
 - [Versions and conformance](conformance.md)
 - [Specification decisions](specification-decisions.md)
 - [Models and source locations](models.md)

@@ -39,6 +39,10 @@
 
 ### Documentation
 
+- Publish canonical v1 installation and Go support guidance, route consumers
+  to the public API reference and compiler-checked example, and replace stale
+  pre-release migration wording.
+
 - Record the public module identity review for the WSDL module's two owned
   dependencies.
 
