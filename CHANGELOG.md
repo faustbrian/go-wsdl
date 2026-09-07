@@ -39,6 +39,11 @@
 
 ### Documentation
 
+- Complete the package map, executable quick start, lifecycle and operational
+  guidance, troubleshooting, and live support and private security routes.
+
+- Correct the root-module tag guidance and the recorded `v1.0.0` release date.
+
 - Publish canonical v1 installation and Go support guidance, route consumers
   to the public API reference and compiler-checked example, and replace stale
   pre-release migration wording.
@@ -52,7 +57,7 @@
 - Remove the archived monorepo documentation link; package guidance remains in
   the repository-owned documentation.
 
-## 1.0.0 - 2026-08-25
+## 1.0.0 - 2026-08-26
 
 ### Changed
 
