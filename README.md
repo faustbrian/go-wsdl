@@ -27,7 +27,7 @@ The module has a stable v1 API and supports Go 1.26.6 or later.
 ## Installation
 
 ```sh
-go get github.com/faustbrian/go-wsdl
+go get github.com/faustbrian/go-wsdl@v1
 ```
 
 Import only the packages your application uses. The root `wsdl` package owns
@@ -37,30 +37,64 @@ explicit resource resolution and immutable compiled graphs.
 ## Quick start
 
 ```go
-compiler, err := compile.New(compile.Options{}) // resolution denied by default
-if err != nil {
-    return err
+package main
+
+import (
+    "context"
+    "fmt"
+
+    wsdl "github.com/faustbrian/go-wsdl"
+)
+
+func main() {
+    source := []byte(`<definitions xmlns="http://schemas.xmlsoap.org/wsdl/"` +
+        ` name="Inventory" targetNamespace="urn:inventory"/>`)
+
+    document, err := wsdl.Parse(context.Background(), source, wsdl.ParseOptions{})
+    if err != nil {
+        fmt.Println(err)
+        return
+    }
+    definitions, ok := document.Definitions11()
+    if !ok {
+        fmt.Println("not a WSDL 1.1 document")
+        return
+    }
+
+    fmt.Println(document.Version())
+    fmt.Println(definitions.Name)
+    fmt.Println(definitions.TargetNamespace)
 }
-set, err := compiler.Compile(ctx, compile.Source{
-    URI:     "https://example.test/service.wsdl",
-    Content: source,
-})
-if err != nil {
-    return err
-}
-service, ok := set.Service(wsdl.QName{Namespace: "urn:example", Local: "API"})
 ```
 
-See the [compiler-checked example](example_test.go) for a complete standalone
-parse and inspection flow. The [package map](docs/README.md) routes advanced
+See the [executable example](example_test.go) for the checked output of this
+standalone parse and inspection flow. The [package map](docs/README.md) routes advanced
 compilation, composition, code generation, and compatibility use cases.
+
+The module has no runtime service lifecycle: it starts no background goroutines,
+owns no external resources, and requires no shutdown. Parsing and compilation
+observe caller cancellation between bounded internal steps. Injected resolvers
+receive that context and must honor it and bound their own I/O. Builders are
+single-owner while compiled sets support concurrent lookup; see
+[security and limits](docs/security.md),
+[validation](docs/validation.md), and
+[resolution and compilation](docs/resolution-and-compilation.md) for errors,
+defaults, cancellation, ownership, and concurrency details.
 
 The [documentation](docs/README.md) covers the model, security boundaries,
 version-specific conformance, builders, composition, code generation,
 interoperability, and release evidence. Observable specification choices are
 recorded in the [decision register](docs/specification-decisions.md).
-`make check` runs the normal local gate; `make check-all` also runs coverage,
-fuzzing, benchmarks, and mutation.
+
+Project resources include the [API reference](https://pkg.go.dev/github.com/faustbrian/go-wsdl),
+[executable example](example_test.go), [testing guidance](CONTRIBUTING.md#verification),
+[FAQ](docs/faq.md), [troubleshooting](docs/faq.md#troubleshooting),
+[changelog](CHANGELOG.md), [license](LICENSE), [support](SUPPORT.md), and
+[private security reporting](SECURITY.md#reporting).
+
+`make check` runs the normal local gate; `make ci` runs the complete repository
+contract, including coverage, fuzzing, benchmarks, mutation, conformance, and
+interoperability.
 
 For ecosystem-wide selection and ownership guidance, see the versioned
 [Golib ecosystem index](https://github.com/faustbrian/go-library-tools/blob/v1.4.0/docs/ecosystem/README.md)

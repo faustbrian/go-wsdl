@@ -2,9 +2,10 @@
 
 ## Reporting
 
-Report suspected vulnerabilities privately through the GitHub security
-advisory for `faustbrian/go-wsdl`. Do not open a public issue containing exploit
-details, credentials, private fixtures, or affected deployment information.
+Report suspected vulnerabilities through a
+[private GitHub security advisory](https://github.com/faustbrian/go-wsdl/security/advisories/new).
+Do not open a public issue containing exploit details, credentials, private
+fixtures, or affected deployment information.
 
 Include the affected module and version, impact, reproduction, preconditions,
 and any suggested mitigation. Reports are acknowledged as soon as practical;

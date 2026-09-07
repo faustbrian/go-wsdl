@@ -24,3 +24,25 @@ version matrix for the exact supported claim.
 
 Yes, within limits. A required extension still fails validation unless the
 caller explicitly declares that QName understood.
+
+## Troubleshooting
+
+### Why does compilation reject an import that parsing accepted?
+
+Parsing records references but performs no I/O. Compilation denies resolution
+unless the caller injects an explicit WSDL resolver and, when schemas are
+loaded, a separate XML Schema resolver. See
+[resolution and compilation](resolution-and-compilation.md).
+
+### How do I inspect validation failures?
+
+Validation returns ordered diagnostics with stable codes and source locations
+when available. Use `Diagnostics.Err()` when a workflow needs one combined
+error, and retain the diagnostics when callers need each failure independently.
+See [validation](validation.md).
+
+### Where should I report a problem?
+
+Use the repository's [support routes](../SUPPORT.md) for reproducible defects
+and questions. Report suspected vulnerabilities only through the
+[private security process](../SECURITY.md#reporting).
