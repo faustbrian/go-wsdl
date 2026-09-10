@@ -7,7 +7,7 @@
 [![Documentation](https://img.shields.io/badge/docs-checked_in_CI-blue)](docs/)
 [![Go Reference](https://pkg.go.dev/badge/github.com/faustbrian/go-wsdl.svg)](https://pkg.go.dev/github.com/faustbrian/go-wsdl)
 [![Release](https://img.shields.io/github/v/release/faustbrian/go-wsdl?sort=semver)](https://github.com/faustbrian/go-wsdl/releases)
-[![Go](https://img.shields.io/badge/go-1.26.6-00ADD8?logo=go)](https://go.dev/)
+[![Go](https://img.shields.io/badge/go-1.27.0-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 `wsdl` is a bounded, deterministic WSDL 1.1 and WSDL 2.0 description
@@ -22,7 +22,7 @@ another consumer.
 
 ## Status
 
-The module has a stable v1 API and supports Go 1.26.6 or later.
+The module has a stable v1 API and supports Go 1.27.0 or later.
 
 ## Installation
 
