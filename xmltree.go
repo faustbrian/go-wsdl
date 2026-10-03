@@ -344,6 +344,9 @@ func writeXMLNodeScoped(
 			if err := escapeXMLText(output, []byte(node.namespaces[prefix])); err != nil {
 				return err
 			}
+			if err := node.contextError(); err != nil {
+				return err
+			}
 			output.WriteByte('"')
 		}
 	}
@@ -365,6 +368,9 @@ func writeXMLNodeScoped(
 		if err := escapeXMLText(output, []byte(attribute.Value)); err != nil {
 			return err
 		}
+		if err := node.contextError(); err != nil {
+			return err
+		}
 		output.WriteByte('"')
 	}
 	output.WriteByte('>')
@@ -384,6 +390,9 @@ func writeXMLNodeScoped(
 			continue
 		}
 		if err := escapeXMLText(output, content.text); err != nil {
+			return err
+		}
+		if err := node.contextError(); err != nil {
 			return err
 		}
 	}

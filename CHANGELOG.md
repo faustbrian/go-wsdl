@@ -18,6 +18,11 @@
 - Stop resolver-chain fallback after caller cancellation without invoking a
   subsequent lookup, while preserving successful and terminal-error results.
 
+- Stop parse-owned preserved-XML serialization after cancellation during
+  successful namespace, attribute, or text escaping, before writing further
+  delimiters. Ordinary serialization output and escaping-error precedence are
+  unchanged; escaping itself is not preemptively interrupted.
+
 ### Changed
 
 - Make library-produced default error strings categorical; diagnostic messages,
