@@ -14,7 +14,14 @@ func decodeDescription20(
 	ctx context.Context,
 	root *xmlNode,
 	options ParseOptions,
-) (Description20, error) {
+) (converted Description20, conversionErr error) {
+	if err := root.useOwner(&parseState{ctx: ctx, options: options}); err != nil {
+		return Description20{}, err
+	}
+	if err := root.contextError(); err != nil {
+		return Description20{}, err
+	}
+	defer finishConversion(root, &converted, &conversionErr)
 	extensibility, err := decodeExtensibility(root, NamespaceWSDL20)
 	if err != nil {
 		return Description20{}, err
@@ -24,10 +31,22 @@ func decodeDescription20(
 		TargetNamespace: root.attribute("targetNamespace"),
 		Location:        root.location,
 	}
+	if err := root.contextError(); err != nil {
+		return Description20{}, err
+	}
 	interfaces := make(map[string]struct{})
+	if err := root.contextError(); err != nil {
+		return Description20{}, err
+	}
 	bindings := make(map[string]struct{})
+	if err := root.contextError(); err != nil {
+		return Description20{}, err
+	}
 	services := make(map[string]struct{})
 	for _, child := range root.children {
+		if err := root.contextError(); err != nil {
+			return Description20{}, err
+		}
 		if documentation := child.documentation(); documentation != nil {
 			description.Documentation = documentation
 			continue
@@ -41,6 +60,9 @@ func decodeDescription20(
 			location := child.attribute("location")
 			uri, err := resolveURI(child.baseURI, location)
 			if err != nil {
+				return Description20{}, err
+			}
+			if err := root.contextError(); err != nil {
 				return Description20{}, err
 			}
 			description.Imports = append(description.Imports, Import20{
@@ -58,6 +80,9 @@ func decodeDescription20(
 			location := child.attribute("location")
 			uri, err := resolveURI(child.baseURI, location)
 			if err != nil {
+				return Description20{}, err
+			}
+			if err := root.contextError(); err != nil {
 				return Description20{}, err
 			}
 			description.Includes = append(description.Includes, Include20{
@@ -80,6 +105,9 @@ func decodeDescription20(
 			if err := registerSymbol(interfaces, "interface", value.Name); err != nil {
 				return Description20{}, err
 			}
+			if err := root.contextError(); err != nil {
+				return Description20{}, err
+			}
 			description.Interfaces = append(description.Interfaces, value)
 		case xml.Name{Space: NamespaceWSDL20, Local: "binding"}:
 			value, err := decodeBinding20(child)
@@ -87,6 +115,9 @@ func decodeDescription20(
 				return Description20{}, err
 			}
 			if err := registerSymbol(bindings, "binding", value.Name); err != nil {
+				return Description20{}, err
+			}
+			if err := root.contextError(); err != nil {
 				return Description20{}, err
 			}
 			description.Bindings = append(description.Bindings, value)
@@ -98,13 +129,23 @@ func decodeDescription20(
 			if err := registerSymbol(services, "service", value.Name); err != nil {
 				return Description20{}, err
 			}
+			if err := root.contextError(); err != nil {
+				return Description20{}, err
+			}
 			description.Services = append(description.Services, value)
 		}
 	}
 	return description, nil
 }
 
-func decodeTypes20(ctx context.Context, node *xmlNode, options ParseOptions) (Types20, error) {
+func decodeTypes20(ctx context.Context, node *xmlNode, options ParseOptions) (converted Types20, conversionErr error) {
+	if err := node.useOwner(&parseState{ctx: ctx, options: options}); err != nil {
+		return Types20{}, err
+	}
+	if err := node.contextError(); err != nil {
+		return Types20{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	types := Types20{
 		Extensibility: Extensibility{
 			ExtensionAttributes: decodeExtensionAttributes(node, NamespaceWSDL20),
@@ -113,6 +154,9 @@ func decodeTypes20(ctx context.Context, node *xmlNode, options ParseOptions) (Ty
 	}
 	schemaCount := 0
 	for _, child := range node.children {
+		if err := node.contextError(); err != nil {
+			return Types20{}, err
+		}
 		if child.name == (xml.Name{Space: NamespaceXMLSchema, Local: "import"}) {
 			if schemaCount >= options.MaxSchemas {
 				return Types20{}, fmt.Errorf(
@@ -126,6 +170,9 @@ func decodeTypes20(ctx context.Context, node *xmlNode, options ParseOptions) (Ty
 			if err != nil {
 				return Types20{}, fmt.Errorf("wsdl: resolve schema import: %w", err)
 			}
+			if err := node.contextError(); err != nil {
+				return Types20{}, err
+			}
 			types.Imports = append(types.Imports, xsd.SchemaReference{
 				Kind: xsd.ReferenceImport, Namespace: child.attribute("namespace"),
 				Location: location, URI: uri,
@@ -137,6 +184,9 @@ func decodeTypes20(ctx context.Context, node *xmlNode, options ParseOptions) (Ty
 			if child.name.Space != NamespaceWSDL20 {
 				extension, err := decodeExtension(child, NamespaceWSDL20)
 				if err != nil {
+					return Types20{}, err
+				}
+				if err := node.contextError(); err != nil {
 					return Types20{}, err
 				}
 				types.Extensions = append(types.Extensions, extension)
@@ -163,13 +213,20 @@ func decodeTypes20(ctx context.Context, node *xmlNode, options ParseOptions) (Ty
 		if err != nil {
 			return Types20{}, fmt.Errorf("wsdl: parse inline schema: %w", err)
 		}
+		if err := node.contextError(); err != nil {
+			return Types20{}, err
+		}
 		types.Schemas = append(types.Schemas, schema)
 		schemaCount++
 	}
 	return types, nil
 }
 
-func decodeInterface20(node *xmlNode) (Interface20, error) {
+func decodeInterface20(node *xmlNode) (converted Interface20, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return Interface20{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	extends, err := node.qnamesAttribute("extends")
 	if err != nil {
 		return Interface20{}, err
@@ -184,9 +241,18 @@ func decodeInterface20(node *xmlNode) (Interface20, error) {
 		StyleDefault: splitSpaceSeparated(node.attribute("styleDefault")),
 		Location:     node.location,
 	}
+	if err := node.contextError(); err != nil {
+		return Interface20{}, err
+	}
 	faults := make(map[string]struct{})
+	if err := node.contextError(); err != nil {
+		return Interface20{}, err
+	}
 	operations := make(map[string]struct{})
 	for _, child := range node.children {
+		if err := node.contextError(); err != nil {
+			return Interface20{}, err
+		}
 		if documentation := child.documentation(); documentation != nil {
 			value.Documentation = documentation
 			continue
@@ -198,6 +264,9 @@ func decodeInterface20(node *xmlNode) (Interface20, error) {
 				return Interface20{}, decodeErr
 			}
 			if err := registerSymbol(faults, "interface fault", fault.Name); err != nil {
+				return Interface20{}, err
+			}
+			if err := node.contextError(); err != nil {
 				return Interface20{}, err
 			}
 			value.Faults = append(value.Faults, fault)
@@ -213,13 +282,20 @@ func decodeInterface20(node *xmlNode) (Interface20, error) {
 			); err != nil {
 				return Interface20{}, err
 			}
+			if err := node.contextError(); err != nil {
+				return Interface20{}, err
+			}
 			value.Operations = append(value.Operations, operation)
 		}
 	}
 	return value, nil
 }
 
-func decodeInterfaceFault20(node *xmlNode) (InterfaceFault20, error) {
+func decodeInterfaceFault20(node *xmlNode) (converted InterfaceFault20, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return InterfaceFault20{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	element, contentModel, contentModelSet, err := decodeMessageContent20(node)
 	if err != nil {
 		return InterfaceFault20{}, err
@@ -238,7 +314,11 @@ func decodeInterfaceFault20(node *xmlNode) (InterfaceFault20, error) {
 	return value, nil
 }
 
-func decodeInterfaceOperation20(node *xmlNode) (InterfaceOperation20, error) {
+func decodeInterfaceOperation20(node *xmlNode) (converted InterfaceOperation20, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return InterfaceOperation20{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	extensibility, err := decodeExtensibility(node, NamespaceWSDL20)
 	if err != nil {
 		return InterfaceOperation20{}, err
@@ -269,6 +349,7 @@ func decodeInterfaceOperation20(node *xmlNode) (InterfaceOperation20, error) {
 		operation.Safe = safe
 		operation.SafeSet = true
 		consumeExtensibility20(
+			node,
 			&operation.Extensibility,
 			[]QName{{Namespace: NamespaceWSDL20Extensions, Local: "safe"}},
 			nil,
@@ -282,6 +363,9 @@ func decodeInterfaceOperation20(node *xmlNode) (InterfaceOperation20, error) {
 			)
 		}
 		for pair := range slices.Chunk(items, 2) {
+			if err := node.contextError(); err != nil {
+				return InterfaceOperation20{}, err
+			}
 			name, parseErr := node.parseQName(pair[0])
 			if parseErr != nil {
 				return InterfaceOperation20{}, parseErr
@@ -292,18 +376,25 @@ func decodeInterfaceOperation20(node *xmlNode) (InterfaceOperation20, error) {
 					"wsdl: invalid RPC signature direction %q", direction,
 				)
 			}
+			if err := node.contextError(); err != nil {
+				return InterfaceOperation20{}, err
+			}
 			operation.RPCSignature = append(operation.RPCSignature, RPCSignatureParameter20{
 				Name: name, Direction: direction,
 			})
 		}
 		operation.RPCSignatureSet = true
 		consumeExtensibility20(
+			node,
 			&operation.Extensibility,
 			[]QName{{Namespace: NamespaceWSDL20RPC, Local: "signature"}},
 			nil,
 		)
 	}
 	for _, child := range node.children {
+		if err := node.contextError(); err != nil {
+			return InterfaceOperation20{}, err
+		}
 		if documentation := child.documentation(); documentation != nil {
 			operation.Documentation = documentation
 			continue
@@ -314,10 +405,16 @@ func decodeInterfaceOperation20(node *xmlNode) (InterfaceOperation20, error) {
 			if err != nil {
 				return InterfaceOperation20{}, err
 			}
+			if err := node.contextError(); err != nil {
+				return InterfaceOperation20{}, err
+			}
 			operation.Inputs = append(operation.Inputs, message)
 		case xml.Name{Space: NamespaceWSDL20, Local: "output"}:
 			message, err := decodeInterfaceMessage20(child)
 			if err != nil {
+				return InterfaceOperation20{}, err
+			}
+			if err := node.contextError(); err != nil {
 				return InterfaceOperation20{}, err
 			}
 			operation.Outputs = append(operation.Outputs, message)
@@ -326,10 +423,16 @@ func decodeInterfaceOperation20(node *xmlNode) (InterfaceOperation20, error) {
 			if err != nil {
 				return InterfaceOperation20{}, err
 			}
+			if err := node.contextError(); err != nil {
+				return InterfaceOperation20{}, err
+			}
 			operation.InFaults = append(operation.InFaults, fault)
 		case xml.Name{Space: NamespaceWSDL20, Local: "outfault"}:
 			fault, err := decodeInterfaceFaultReference20(child)
 			if err != nil {
+				return InterfaceOperation20{}, err
+			}
+			if err := node.contextError(); err != nil {
 				return InterfaceOperation20{}, err
 			}
 			operation.OutFaults = append(operation.OutFaults, fault)
@@ -353,7 +456,11 @@ func validRPCDirection20(value RPCDirection) bool {
 	}
 }
 
-func decodeInterfaceMessage20(node *xmlNode) (InterfaceMessageReference20, error) {
+func decodeInterfaceMessage20(node *xmlNode) (converted InterfaceMessageReference20, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return InterfaceMessageReference20{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	element, contentModel, contentModelSet, err := decodeMessageContent20(node)
 	if err != nil {
 		return InterfaceMessageReference20{}, err
@@ -375,6 +482,9 @@ func decodeInterfaceMessage20(node *xmlNode) (InterfaceMessageReference20, error
 func decodeMessageContent20(
 	node *xmlNode,
 ) (QName, MessageContentModel, bool, error) {
+	if err := node.contextError(); err != nil {
+		return QName{}, "", false, err
+	}
 	if !node.hasAttribute("element") {
 		return QName{}, MessageContentOther, false, nil
 	}
@@ -390,7 +500,11 @@ func decodeMessageContent20(
 	return element, MessageContentElement, true, nil
 }
 
-func decodeInterfaceFaultReference20(node *xmlNode) (InterfaceFaultReference20, error) {
+func decodeInterfaceFaultReference20(node *xmlNode) (converted InterfaceFaultReference20, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return InterfaceFaultReference20{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	reference, err := node.qnameAttribute("ref")
 	if err != nil {
 		return InterfaceFaultReference20{}, err
@@ -408,7 +522,11 @@ func decodeInterfaceFaultReference20(node *xmlNode) (InterfaceFaultReference20, 
 	return value, nil
 }
 
-func decodeBinding20(node *xmlNode) (Binding20, error) {
+func decodeBinding20(node *xmlNode) (converted Binding20, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return Binding20{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	interfaceName, err := node.qnameAttribute("interface")
 	if err != nil {
 		return Binding20{}, err
@@ -426,6 +544,7 @@ func decodeBinding20(node *xmlNode) (Binding20, error) {
 		return Binding20{}, err
 	}
 	consumeExtensibility20(
+		node,
 		&extensibility,
 		[]QName{
 			{Namespace: NamespaceWSDL20SOAP, Local: "version"},
@@ -435,6 +554,7 @@ func decodeBinding20(node *xmlNode) (Binding20, error) {
 		[]QName{{Namespace: NamespaceWSDL20SOAP, Local: "module"}},
 	)
 	consumeExtensibility20(
+		node,
 		&extensibility,
 		httpBindingAttributeNames20(),
 		nil,
@@ -444,9 +564,18 @@ func decodeBinding20(node *xmlNode) (Binding20, error) {
 		Name:          node.attribute("name"), Interface: interfaceName,
 		Type: node.attribute("type"), SOAP: soap, HTTP: http, Location: node.location,
 	}
+	if err := node.contextError(); err != nil {
+		return Binding20{}, err
+	}
 	faults := make(map[string]struct{})
+	if err := node.contextError(); err != nil {
+		return Binding20{}, err
+	}
 	operations := make(map[string]struct{})
 	for _, child := range node.children {
+		if err := node.contextError(); err != nil {
+			return Binding20{}, err
+		}
 		if documentation := child.documentation(); documentation != nil {
 			binding.Documentation = documentation
 			continue
@@ -462,6 +591,9 @@ func decodeBinding20(node *xmlNode) (Binding20, error) {
 			); err != nil {
 				return Binding20{}, err
 			}
+			if err := node.contextError(); err != nil {
+				return Binding20{}, err
+			}
 			binding.Faults = append(binding.Faults, fault)
 		case xml.Name{Space: NamespaceWSDL20, Local: "operation"}:
 			operation, decodeErr := decodeBindingOperation20(child)
@@ -473,13 +605,20 @@ func decodeBinding20(node *xmlNode) (Binding20, error) {
 			); err != nil {
 				return Binding20{}, err
 			}
+			if err := node.contextError(); err != nil {
+				return Binding20{}, err
+			}
 			binding.Operations = append(binding.Operations, operation)
 		}
 	}
 	return binding, nil
 }
 
-func decodeBindingFault20(node *xmlNode) (BindingFault20, error) {
+func decodeBindingFault20(node *xmlNode) (converted BindingFault20, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return BindingFault20{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	reference, err := node.qnameAttribute("ref")
 	if err != nil {
 		return BindingFault20{}, err
@@ -497,6 +636,7 @@ func decodeBindingFault20(node *xmlNode) (BindingFault20, error) {
 		return BindingFault20{}, err
 	}
 	consumeExtensibility20(
+		node,
 		&extensibility,
 		[]QName{
 			{Namespace: NamespaceWSDL20SOAP, Local: "code"},
@@ -508,6 +648,7 @@ func decodeBindingFault20(node *xmlNode) (BindingFault20, error) {
 		},
 	)
 	consumeExtensibility20(
+		node,
 		&extensibility,
 		[]QName{
 			{Namespace: NamespaceWSDL20HTTP, Local: "code"},
@@ -524,7 +665,11 @@ func decodeBindingFault20(node *xmlNode) (BindingFault20, error) {
 	return value, nil
 }
 
-func decodeBindingOperation20(node *xmlNode) (BindingOperation20, error) {
+func decodeBindingOperation20(node *xmlNode) (converted BindingOperation20, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return BindingOperation20{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	reference, err := node.qnameAttribute("ref")
 	if err != nil {
 		return BindingOperation20{}, err
@@ -542,6 +687,7 @@ func decodeBindingOperation20(node *xmlNode) (BindingOperation20, error) {
 		return BindingOperation20{}, err
 	}
 	consumeExtensibility20(
+		node,
 		&extensibility,
 		[]QName{
 			{Namespace: NamespaceWSDL20SOAP, Local: "mep"},
@@ -550,6 +696,7 @@ func decodeBindingOperation20(node *xmlNode) (BindingOperation20, error) {
 		[]QName{{Namespace: NamespaceWSDL20SOAP, Local: "module"}},
 	)
 	consumeExtensibility20(
+		node,
 		&extensibility,
 		httpOperationAttributeNames20(),
 		nil,
@@ -559,11 +706,17 @@ func decodeBindingOperation20(node *xmlNode) (BindingOperation20, error) {
 		Documentation: firstDocumentation(node), SOAP: soap, HTTP: http,
 	}
 	for _, child := range node.children {
+		if err := node.contextError(); err != nil {
+			return BindingOperation20{}, err
+		}
 		switch child.name {
 		case xml.Name{Space: NamespaceWSDL20, Local: "input"}:
 			message, decodeErr := decodeBindingMessage20(child)
 			if decodeErr != nil {
 				return BindingOperation20{}, decodeErr
+			}
+			if err := node.contextError(); err != nil {
+				return BindingOperation20{}, err
 			}
 			value.Inputs = append(value.Inputs, message)
 		case xml.Name{Space: NamespaceWSDL20, Local: "output"}:
@@ -571,11 +724,17 @@ func decodeBindingOperation20(node *xmlNode) (BindingOperation20, error) {
 			if decodeErr != nil {
 				return BindingOperation20{}, decodeErr
 			}
+			if err := node.contextError(); err != nil {
+				return BindingOperation20{}, err
+			}
 			value.Outputs = append(value.Outputs, message)
 		case xml.Name{Space: NamespaceWSDL20, Local: "infault"}:
 			fault, decodeErr := decodeBindingFaultReference20(child)
 			if decodeErr != nil {
 				return BindingOperation20{}, decodeErr
+			}
+			if err := node.contextError(); err != nil {
+				return BindingOperation20{}, err
 			}
 			value.InFaults = append(value.InFaults, fault)
 		case xml.Name{Space: NamespaceWSDL20, Local: "outfault"}:
@@ -583,13 +742,20 @@ func decodeBindingOperation20(node *xmlNode) (BindingOperation20, error) {
 			if decodeErr != nil {
 				return BindingOperation20{}, decodeErr
 			}
+			if err := node.contextError(); err != nil {
+				return BindingOperation20{}, err
+			}
 			value.OutFaults = append(value.OutFaults, fault)
 		}
 	}
 	return value, nil
 }
 
-func decodeBindingMessage20(node *xmlNode) (BindingMessageReference20, error) {
+func decodeBindingMessage20(node *xmlNode) (converted BindingMessageReference20, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return BindingMessageReference20{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	extensibility, err := decodeExtensibility(node, NamespaceWSDL20)
 	if err != nil {
 		return BindingMessageReference20{}, err
@@ -603,6 +769,7 @@ func decodeBindingMessage20(node *xmlNode) (BindingMessageReference20, error) {
 		return BindingMessageReference20{}, err
 	}
 	consumeExtensibility20(
+		node,
 		&extensibility,
 		nil,
 		[]QName{
@@ -611,6 +778,7 @@ func decodeBindingMessage20(node *xmlNode) (BindingMessageReference20, error) {
 		},
 	)
 	consumeExtensibility20(
+		node,
 		&extensibility,
 		[]QName{
 			{Namespace: NamespaceWSDL20HTTP, Local: "contentEncoding"},
@@ -628,7 +796,11 @@ func decodeBindingMessage20(node *xmlNode) (BindingMessageReference20, error) {
 	}, nil
 }
 
-func decodeBindingFaultReference20(node *xmlNode) (BindingFaultReference20, error) {
+func decodeBindingFaultReference20(node *xmlNode) (converted BindingFaultReference20, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return BindingFaultReference20{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	reference, err := node.qnameAttribute("ref")
 	if err != nil {
 		return BindingFaultReference20{}, err
@@ -643,11 +815,13 @@ func decodeBindingFaultReference20(node *xmlNode) (BindingFaultReference20, erro
 	}
 	http := decodeHTTPFaultReferenceBinding20(node)
 	consumeExtensibility20(
+		node,
 		&extensibility,
 		nil,
 		[]QName{{Namespace: NamespaceWSDL20SOAP, Local: "module"}},
 	)
 	consumeExtensibility20(
+		node,
 		&extensibility,
 		[]QName{{Namespace: NamespaceWSDL20HTTP, Local: "transferCoding"}},
 		nil,
@@ -663,7 +837,11 @@ func decodeBindingFaultReference20(node *xmlNode) (BindingFaultReference20, erro
 	}, nil
 }
 
-func decodeHTTPBinding20(node *xmlNode) (*HTTPBinding20, error) {
+func decodeHTTPBinding20(node *xmlNode) (converted *HTTPBinding20, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return nil, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	value := HTTPBinding20{}
 	value.MethodDefault, value.MethodDefaultSet = node.namespacedAttribute(
 		NamespaceWSDL20HTTP, "methodDefault",
@@ -688,7 +866,11 @@ func decodeHTTPBinding20(node *xmlNode) (*HTTPBinding20, error) {
 	return &value, nil
 }
 
-func decodeHTTPFaultBinding20(node *xmlNode) (*HTTPFaultBinding20, error) {
+func decodeHTTPFaultBinding20(node *xmlNode) (converted *HTTPFaultBinding20, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return nil, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	value := HTTPFaultBinding20{}
 	value.Code, value.CodeSet = node.namespacedAttribute(NamespaceWSDL20HTTP, "code")
 	value.ContentEncoding, value.ContentEncodingSet = node.namespacedAttribute(
@@ -709,7 +891,11 @@ func decodeHTTPFaultBinding20(node *xmlNode) (*HTTPFaultBinding20, error) {
 	return &value, nil
 }
 
-func decodeHTTPOperationBinding20(node *xmlNode) (*HTTPOperationBinding20, error) {
+func decodeHTTPOperationBinding20(node *xmlNode) (converted *HTTPOperationBinding20, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return nil, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	value := HTTPOperationBinding20{}
 	value.Location, value.LocationSet = node.namespacedAttribute(NamespaceWSDL20HTTP, "location")
 	value.Method, value.MethodSet = node.namespacedAttribute(NamespaceWSDL20HTTP, "method")
@@ -746,7 +932,11 @@ func decodeHTTPOperationBinding20(node *xmlNode) (*HTTPOperationBinding20, error
 	return &value, nil
 }
 
-func decodeHTTPMessageBinding20(node *xmlNode) (*HTTPMessageBinding20, error) {
+func decodeHTTPMessageBinding20(node *xmlNode) (converted *HTTPMessageBinding20, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return nil, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	value := HTTPMessageBinding20{}
 	value.ContentEncoding, value.ContentEncodingSet = node.namespacedAttribute(
 		NamespaceWSDL20HTTP, "contentEncoding",
@@ -765,7 +955,11 @@ func decodeHTTPMessageBinding20(node *xmlNode) (*HTTPMessageBinding20, error) {
 	return &value, nil
 }
 
-func decodeHTTPFaultReferenceBinding20(node *xmlNode) *HTTPFaultReferenceBinding20 {
+func decodeHTTPFaultReferenceBinding20(node *xmlNode) (converted *HTTPFaultReferenceBinding20) {
+	if node.contextError() != nil {
+		return nil
+	}
+	defer finishConversionValue(node, &converted)
 	value, exists := node.namespacedAttribute(NamespaceWSDL20HTTP, "transferCoding")
 	if !exists {
 		return nil
@@ -773,7 +967,11 @@ func decodeHTTPFaultReferenceBinding20(node *xmlNode) *HTTPFaultReferenceBinding
 	return &HTTPFaultReferenceBinding20{TransferCoding: value, TransferCodingSet: true}
 }
 
-func decodeHTTPEndpoint20(node *xmlNode) *HTTPEndpoint20 {
+func decodeHTTPEndpoint20(node *xmlNode) (converted *HTTPEndpoint20) {
+	if node.contextError() != nil {
+		return nil
+	}
+	defer finishConversionValue(node, &converted)
 	value := HTTPEndpoint20{}
 	value.AuthenticationScheme, value.AuthenticationSchemeSet = node.namespacedAttribute(
 		NamespaceWSDL20HTTP, "authenticationScheme",
@@ -787,9 +985,19 @@ func decodeHTTPEndpoint20(node *xmlNode) *HTTPEndpoint20 {
 	return &value
 }
 
-func decodeHTTPHeaders20(node *xmlNode) ([]HTTPHeader20, error) {
+func decodeHTTPHeaders20(node *xmlNode) (converted []HTTPHeader20, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return nil, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
+	if err := node.contextError(); err != nil {
+		return nil, err
+	}
 	headers := make([]HTTPHeader20, 0)
 	for _, child := range node.children {
+		if err := node.contextError(); err != nil {
+			return nil, err
+		}
 		if child.name != (xml.Name{Space: NamespaceWSDL20HTTP, Local: "header"}) {
 			continue
 		}
@@ -813,6 +1021,9 @@ func decodeHTTPHeaders20(node *xmlNode) ([]HTTPHeader20, error) {
 		); err != nil {
 			return nil, err
 		}
+		if err := node.contextError(); err != nil {
+			return nil, err
+		}
 		headers = append(headers, header)
 	}
 	return headers, nil
@@ -824,7 +1035,11 @@ func decodeNamespacedBoolean20(
 	local string,
 	value *bool,
 	set *bool,
-) error {
+) (conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return err
+	}
+	defer finishConversionError(node, &conversionErr)
 	lexical, exists := node.namespacedAttribute(namespace, local)
 	if !exists {
 		return nil
@@ -863,7 +1078,11 @@ func extensionAttributeNames20(namespace string, locals []string) []QName {
 	return result
 }
 
-func decodeSOAPBinding20(node *xmlNode) (*SOAPBinding20, error) {
+func decodeSOAPBinding20(node *xmlNode) (converted *SOAPBinding20, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return nil, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	value := SOAPBinding20{}
 	value.Version, value.VersionSet = node.namespacedAttribute(NamespaceWSDL20SOAP, "version")
 	value.Protocol, value.ProtocolSet = node.namespacedAttribute(NamespaceWSDL20SOAP, "protocol")
@@ -882,7 +1101,11 @@ func decodeSOAPBinding20(node *xmlNode) (*SOAPBinding20, error) {
 	return &value, nil
 }
 
-func decodeSOAPFaultBinding20(node *xmlNode) (*SOAPFaultBinding20, error) {
+func decodeSOAPFaultBinding20(node *xmlNode) (converted *SOAPFaultBinding20, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return nil, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	value := SOAPFaultBinding20{}
 	if lexical, exists := node.namespacedAttribute(NamespaceWSDL20SOAP, "code"); exists {
 		value.CodeSet = true
@@ -902,8 +1125,14 @@ func decodeSOAPFaultBinding20(node *xmlNode) (*SOAPFaultBinding20, error) {
 			value.SubcodesAny = true
 		} else {
 			for _, item := range splitSpaceSeparated(lexical) {
+				if err := node.contextError(); err != nil {
+					return nil, err
+				}
 				code, err := node.parseQName(item)
 				if err != nil {
+					return nil, err
+				}
+				if err := node.contextError(); err != nil {
 					return nil, err
 				}
 				value.Subcodes = append(value.Subcodes, code)
@@ -927,7 +1156,11 @@ func decodeSOAPFaultBinding20(node *xmlNode) (*SOAPFaultBinding20, error) {
 	return &value, nil
 }
 
-func decodeSOAPOperationBinding20(node *xmlNode) (*SOAPOperationBinding20, error) {
+func decodeSOAPOperationBinding20(node *xmlNode) (converted *SOAPOperationBinding20, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return nil, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	value := SOAPOperationBinding20{}
 	value.MEP, value.MEPSet = node.namespacedAttribute(NamespaceWSDL20SOAP, "mep")
 	value.Action, value.ActionSet = node.namespacedAttribute(NamespaceWSDL20SOAP, "action")
@@ -942,7 +1175,11 @@ func decodeSOAPOperationBinding20(node *xmlNode) (*SOAPOperationBinding20, error
 	return &value, nil
 }
 
-func decodeSOAPMessageBinding20(node *xmlNode) (*SOAPMessageBinding20, error) {
+func decodeSOAPMessageBinding20(node *xmlNode) (converted *SOAPMessageBinding20, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return nil, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	modules, err := decodeSOAPModules20(node)
 	if err != nil {
 		return nil, err
@@ -959,7 +1196,11 @@ func decodeSOAPMessageBinding20(node *xmlNode) (*SOAPMessageBinding20, error) {
 
 func decodeSOAPFaultReferenceBinding20(
 	node *xmlNode,
-) (*SOAPFaultReferenceBinding20, error) {
+) (converted *SOAPFaultReferenceBinding20, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return nil, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	modules, err := decodeSOAPModules20(node)
 	if err != nil {
 		return nil, err
@@ -970,9 +1211,19 @@ func decodeSOAPFaultReferenceBinding20(
 	return &SOAPFaultReferenceBinding20{Modules: modules}, nil
 }
 
-func decodeSOAPModules20(node *xmlNode) ([]SOAPModule20, error) {
+func decodeSOAPModules20(node *xmlNode) (converted []SOAPModule20, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return nil, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
+	if err := node.contextError(); err != nil {
+		return nil, err
+	}
 	modules := make([]SOAPModule20, 0)
 	for _, child := range node.children {
+		if err := node.contextError(); err != nil {
+			return nil, err
+		}
 		if child.name != (xml.Name{Space: NamespaceWSDL20SOAP, Local: "module"}) {
 			continue
 		}
@@ -994,14 +1245,27 @@ func decodeSOAPModules20(node *xmlNode) ([]SOAPModule20, error) {
 			module.Required = required
 			module.RequiredSet = true
 		}
+		if err := node.contextError(); err != nil {
+			return nil, err
+		}
 		modules = append(modules, module)
 	}
 	return modules, nil
 }
 
-func decodeSOAPHeaders20(node *xmlNode) ([]SOAPHeader20, error) {
+func decodeSOAPHeaders20(node *xmlNode) (converted []SOAPHeader20, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return nil, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
+	if err := node.contextError(); err != nil {
+		return nil, err
+	}
 	headers := make([]SOAPHeader20, 0)
 	for _, child := range node.children {
+		if err := node.contextError(); err != nil {
+			return nil, err
+		}
 		if child.name != (xml.Name{Space: NamespaceWSDL20SOAP, Local: "header"}) {
 			continue
 		}
@@ -1029,6 +1293,9 @@ func decodeSOAPHeaders20(node *xmlNode) ([]SOAPHeader20, error) {
 		); err != nil {
 			return nil, err
 		}
+		if err := node.contextError(); err != nil {
+			return nil, err
+		}
 		headers = append(headers, header)
 	}
 	return headers, nil
@@ -1039,7 +1306,11 @@ func decodeSOAPBoolean20(
 	local string,
 	value *bool,
 	set *bool,
-) error {
+) (conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return err
+	}
+	defer finishConversionError(node, &conversionErr)
 	lexical, exists := node.namespacedAttribute("", local)
 	if !exists {
 		return nil
@@ -1054,37 +1325,72 @@ func decodeSOAPBoolean20(
 }
 
 func consumeExtensibility20(
+	node *xmlNode,
 	value *Extensibility,
 	attributes []QName,
 	elements []QName,
 ) {
+	if node.contextError() != nil {
+		return
+	}
+	if node.contextError() != nil {
+		return
+	}
 	attributeNames := make(map[QName]struct{}, len(attributes))
 	for _, name := range attributes {
+		if node.contextError() != nil {
+			return
+		}
 		attributeNames[name] = struct{}{}
 	}
 	filteredAttributes := value.ExtensionAttributes[:0]
 	for _, attribute := range value.ExtensionAttributes {
+		if node.contextError() != nil {
+			return
+		}
 		if _, consumed := attributeNames[attribute.Name]; !consumed {
+			if node.contextError() != nil {
+				return
+			}
 			filteredAttributes = append(filteredAttributes, attribute)
 		}
 	}
 	value.ExtensionAttributes = filteredAttributes
 
+	if node.contextError() != nil {
+		return
+	}
 	elementNames := make(map[QName]struct{}, len(elements))
 	for _, name := range elements {
+		if node.contextError() != nil {
+			return
+		}
 		elementNames[name] = struct{}{}
 	}
 	filteredElements := value.Extensions[:0]
 	for _, element := range value.Extensions {
+		if node.contextError() != nil {
+			return
+		}
 		if _, consumed := elementNames[element.Name]; !consumed {
+			if node.contextError() != nil {
+				return
+			}
 			filteredElements = append(filteredElements, element)
 		}
 	}
 	value.Extensions = filteredElements
 }
 
-func firstDocumentation(node *xmlNode) *Documentation {
+func firstDocumentation(node *xmlNode) (converted *Documentation) {
+	if node.contextError() != nil {
+		return nil
+	}
+	defer finishConversionValue(node, &converted)
 	for _, child := range node.children {
+		if node.contextError() != nil {
+			return nil
+		}
 		if documentation := child.documentation(); documentation != nil {
 			return documentation
 		}
@@ -1092,7 +1398,11 @@ func firstDocumentation(node *xmlNode) *Documentation {
 	return nil
 }
 
-func decodeService20(node *xmlNode) (Service20, error) {
+func decodeService20(node *xmlNode) (converted Service20, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return Service20{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	interfaceName, err := node.qnameAttribute("interface")
 	if err != nil {
 		return Service20{}, err
@@ -1105,8 +1415,14 @@ func decodeService20(node *xmlNode) (Service20, error) {
 		Extensibility: extensibility,
 		Name:          node.attribute("name"), Interface: interfaceName, Location: node.location,
 	}
+	if err := node.contextError(); err != nil {
+		return Service20{}, err
+	}
 	endpoints := make(map[string]struct{})
 	for _, child := range node.children {
+		if err := node.contextError(); err != nil {
+			return Service20{}, err
+		}
 		if documentation := child.documentation(); documentation != nil {
 			service.Documentation = documentation
 			continue
@@ -1118,7 +1434,10 @@ func decodeService20(node *xmlNode) (Service20, error) {
 		if decodeErr != nil {
 			return Service20{}, decodeErr
 		}
-		name := child.attribute("name")
+		name, nameErr := child.checkedAttribute("name")
+		if nameErr != nil {
+			return Service20{}, nameErr
+		}
 		if err := registerSymbol(endpoints, "service endpoint", name); err != nil {
 			return Service20{}, err
 		}
@@ -1128,6 +1447,7 @@ func decodeService20(node *xmlNode) (Service20, error) {
 		}
 		http := decodeHTTPEndpoint20(child)
 		consumeExtensibility20(
+			node,
 			&extensibility,
 			[]QName{
 				{Namespace: NamespaceWSDL20HTTP, Local: "authenticationScheme"},
@@ -1141,6 +1461,9 @@ func decodeService20(node *xmlNode) (Service20, error) {
 			Address: child.attribute("address"), HTTP: http, Location: child.location,
 		}
 		endpoint.Documentation = firstDocumentation(child)
+		if err := node.contextError(); err != nil {
+			return Service20{}, err
+		}
 		service.Endpoints = append(service.Endpoints, endpoint)
 	}
 	return service, nil

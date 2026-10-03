@@ -7,8 +7,13 @@
 - Honor parser cancellation before owned buffered-tree conversion, during
   recursive tree checks, at version-model conversion admission, and before
   successful document publication. Cancellation preserves its inspectable cause
-  without publishing a partial document. Nested model conversion and XML
-  serialization remain bounded phases without per-loop cancellation checks.
+  without publishing a partial document. Both version converters, nested
+  attributes/components/adjuncts and preserved-XML traversal share that owner
+  and check cancellation throughout their owned loops and before success.
+  Published models remain independent of the parse context. Lexical validation,
+  standard-library sorting and escaping calls are cooperative boundaries, not
+  preemptively interrupted; compiler graph and semantic validation are separate
+  cancellation boundaries.
 
 - Stop resolver-chain fallback after caller cancellation without invoking a
   subsequent lookup, while preserving successful and terminal-error results.
