@@ -14,6 +14,7 @@ import (
 	"strconv"
 
 	wsdl "github.com/faustbrian/go-wsdl"
+	"github.com/faustbrian/go-wsdl/internal/errorprivacy"
 	"github.com/faustbrian/go-wsdl/resolve"
 	xsd "github.com/faustbrian/go-xsd"
 	xsdcompile "github.com/faustbrian/go-xsd/compile"
@@ -119,7 +120,7 @@ func New(options Options) (*Compiler, error) {
 		schemaResolver = xsdresolve.Deny()
 	}
 	if _, err := xsdcompile.New(xsdcompile.Options{Limits: options.SchemaLimits}); err != nil {
-		return nil, fmt.Errorf("wsdl compile: schema limits: %w", err)
+		return nil, errorprivacy.Wrap("wsdl compile: schema limits", err)
 	}
 	return &Compiler{
 		resolver: resolver, schemaResolver: schemaResolver,
@@ -450,6 +451,11 @@ type compileState struct {
 
 // Compile parses, resolves, validates, and compiles one bounded WSDL graph.
 func (c *Compiler) Compile(ctx context.Context, root Source) (*Set, error) {
+	set, err := c.compile(ctx, root)
+	return set, errorprivacy.Wrap("wsdl compile: failed", err)
+}
+
+func (c *Compiler) compile(ctx context.Context, root Source) (*Set, error) {
 	if c == nil {
 		return nil, errors.New("wsdl compile: compiler is nil")
 	}

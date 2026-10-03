@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/faustbrian/go-wire/xmlwire"
+	"github.com/faustbrian/go-wsdl/internal/errorprivacy"
 )
 
 const defaultMaxOutputBytes int64 = 8 << 20
@@ -25,6 +26,11 @@ type MarshalOptions struct {
 
 // Marshal serializes a WSDL document deterministically without external I/O.
 func Marshal(document *Document, options MarshalOptions) ([]byte, error) {
+	payload, err := marshal(document, options)
+	return payload, errorprivacy.Wrap("wsdl: marshal failed", err)
+}
+
+func marshal(document *Document, options MarshalOptions) ([]byte, error) {
 	if document == nil {
 		return nil, errors.New("wsdl: document is nil")
 	}

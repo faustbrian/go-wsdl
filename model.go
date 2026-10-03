@@ -3,8 +3,8 @@ package wsdl
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/faustbrian/go-wsdl/internal/errorprivacy"
 	xsd "github.com/faustbrian/go-xsd"
 )
 
@@ -106,19 +106,19 @@ func canonicalDocument(
 ) (*Document, error) {
 	diagnostics := canonicalValidate(document, validation)
 	if err := diagnostics.Err(); err != nil {
-		return nil, fmt.Errorf("wsdl: validate model: %w", err)
+		return nil, errorprivacy.Wrap("wsdl: validate model", err)
 	}
 	payload, err := canonicalMarshal(document, MarshalOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("wsdl: canonicalize model: %w", err)
+		return nil, errorprivacy.Wrap("wsdl: canonicalize model", err)
 	}
 	canonical, err := canonicalParse(context.Background(), payload, ParseOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("wsdl: canonicalize model: %w", err)
+		return nil, errorprivacy.Wrap("wsdl: canonicalize model", err)
 	}
 	diagnostics = canonicalValidate(canonical, validation)
 	if err := diagnostics.Err(); err != nil {
-		return nil, fmt.Errorf("wsdl: validate model: %w", err)
+		return nil, errorprivacy.Wrap("wsdl: validate model", err)
 	}
 	return canonical, nil
 }

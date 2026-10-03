@@ -294,7 +294,7 @@ func TestParseRejectsGeneralXMLAndResourceBoundaries(t *testing.T) {
 				[]byte(`<description xmlns="http://www.w3.org/ns/wsdl"/>`),
 				options,
 			)
-			if err == nil || err.Error() != "wsdl: parse limits must not be negative" {
+			if err == nil || err.Error() != "wsdl: parse failed" || errors.Unwrap(err) == nil || errors.Unwrap(err).Error() != "wsdl: parse limits must not be negative" {
 				t.Fatalf("Parse() error = %v", err)
 			}
 		})

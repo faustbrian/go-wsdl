@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+
+	"github.com/faustbrian/go-wsdl/internal/errorprivacy"
 )
 
 var (
@@ -55,7 +57,7 @@ func (denyResolver) Resolve(ctx context.Context, request Request) (Resource, err
 	if err := ctx.Err(); err != nil {
 		return Resource{}, err
 	}
-	return Resource{}, fmt.Errorf("%w: %s", ErrAccessDenied, request.URI)
+	return Resource{}, errorprivacy.Wrap("wsdl resolve: access denied", fmt.Errorf("%w: %s", ErrAccessDenied, request.URI))
 }
 
 // Memory is an immutable collection of caller-supplied WSDL resources.
@@ -70,7 +72,7 @@ func NewMemory(resources map[string][]byte) (*Memory, error) {
 	for identity, content := range resources {
 		uri, err := url.Parse(identity)
 		if err != nil || !uri.IsAbs() || uri.Fragment != "" {
-			return nil, fmt.Errorf("wsdl resolve: invalid resource URI %q", identity)
+			return nil, errorprivacy.Wrap("wsdl resolve: invalid resource URI", fmt.Errorf("wsdl resolve: invalid resource URI %q", identity))
 		}
 		owned[uri.String()] = append([]byte(nil), content...)
 	}
@@ -83,11 +85,11 @@ func (r *Memory) Resolve(ctx context.Context, request Request) (Resource, error)
 		return Resource{}, err
 	}
 	if r == nil {
-		return Resource{}, fmt.Errorf("%w: %s", ErrAccessDenied, request.URI)
+		return Resource{}, errorprivacy.Wrap("wsdl resolve: access denied", fmt.Errorf("%w: %s", ErrAccessDenied, request.URI))
 	}
 	content, ok := r.resources[request.URI]
 	if !ok {
-		return Resource{}, fmt.Errorf("%w: %s", ErrNotFound, request.URI)
+		return Resource{}, errorprivacy.Wrap("wsdl resolve: resource not found", fmt.Errorf("%w: %s", ErrNotFound, request.URI))
 	}
 	return Resource{
 		URI: request.URI, Content: append([]byte(nil), content...),
@@ -124,5 +126,5 @@ func (c chain) Resolve(ctx context.Context, request Request) (Resource, error) {
 			return Resource{}, err
 		}
 	}
-	return Resource{}, fmt.Errorf("%w: %s", ErrNotFound, request.URI)
+	return Resource{}, errorprivacy.Wrap("wsdl resolve: resource not found", fmt.Errorf("%w: %s", ErrNotFound, request.URI))
 }
