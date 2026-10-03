@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Fixed
+
+- Stop resolver-chain fallback after caller cancellation without invoking a
+  subsequent lookup, while preserving successful and terminal-error results.
+
 ### Changed
 
 - Adopt the `go-library-tools` v1.4.0 schema-v2 cohesion contract, local

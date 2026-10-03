@@ -22,6 +22,12 @@ The WSDL 1.1 Note has no W3C errata document; implementation decisions record
 the reviewed prose/schema discrepancies instead of implying corrections that
 were never published.
 
+Authority review on 2026-10-03 fetched the WSDL 1.1 Note, WSDL 2.0 Core
+Recommendation, and WSDL 2.0 errata page from the monitored W3C URLs. All
+three responses matched their existing SHA-256 pins in `monitoring.json`;
+the reviewed inputs and behavior decisions remain unchanged. This refresh
+does not claim that every other manifest resource was fetched again.
+
 `discrepancies-and-extensions.md` records those discrepancies and enumerates
 every modeled foreign-attribute and foreign-element extension boundary.
 The canonical [`docs/specification-decisions.md`](../docs/specification-decisions.md)

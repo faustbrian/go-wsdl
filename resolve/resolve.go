@@ -95,7 +95,8 @@ func (r *Memory) Resolve(ctx context.Context, request Request) (Resource, error)
 }
 
 // Chain returns a resolver that tries children in order. Only ErrNotFound
-// advances to the next resolver; policy and operational errors stop.
+// advances to the next resolver while the context remains active; policy and
+// operational errors stop.
 func Chain(resolvers ...Resolver) Resolver {
 	return chain{resolvers: append([]Resolver(nil), resolvers...)}
 }
@@ -117,6 +118,9 @@ func (c chain) Resolve(ctx context.Context, request Request) (Resource, error) {
 			return resource, nil
 		}
 		if !errors.Is(err, ErrNotFound) {
+			return Resource{}, err
+		}
+		if err := ctx.Err(); err != nil {
 			return Resource{}, err
 		}
 	}
