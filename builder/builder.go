@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	wsdl "github.com/faustbrian/go-wsdl"
+	"github.com/faustbrian/go-wsdl/internal/errorprivacy"
 )
 
 var ErrDuplicateComponent = errors.New("wsdl builder: duplicate component")
@@ -205,7 +206,7 @@ func addName(names map[string]struct{}, kind, name string) error {
 		return errors.New("wsdl builder: builder was not initialized")
 	}
 	if _, exists := names[name]; exists {
-		return fmt.Errorf("%w: %s %q", ErrDuplicateComponent, kind, name)
+		return errorprivacy.Wrap("wsdl builder: duplicate component", fmt.Errorf("%w: %s %q", ErrDuplicateComponent, kind, name))
 	}
 	names[name] = struct{}{}
 	return nil

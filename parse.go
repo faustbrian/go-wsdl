@@ -9,6 +9,7 @@ import (
 	"io"
 
 	"github.com/faustbrian/go-wire/xmlwire"
+	"github.com/faustbrian/go-wsdl/internal/errorprivacy"
 )
 
 const (
@@ -49,6 +50,11 @@ type ParseOptions struct {
 
 // Parse decodes one WSDL document without loading external resources.
 func Parse(ctx context.Context, source []byte, options ParseOptions) (*Document, error) {
+	document, err := parse(ctx, source, options)
+	return document, errorprivacy.Wrap("wsdl: parse failed", err)
+}
+
+func parse(ctx context.Context, source []byte, options ParseOptions) (*Document, error) {
 	limit := options.MaxDocumentBytes
 	if limit < 0 || options.MaxDepth < 0 || options.MaxElements < 0 ||
 		options.MaxAttributes < 0 || options.MaxTextBytes < 0 ||

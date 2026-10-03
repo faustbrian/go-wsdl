@@ -3,7 +3,6 @@ package compile_test
 import (
 	"context"
 	"errors"
-	"strings"
 	"sync"
 	"testing"
 
@@ -1090,8 +1089,18 @@ func TestCompilerRunsSemanticValidationWithOwnedOptions(t *testing.T) {
 			` pattern="http://www.w3.org/ns/wsdl/in-out"><input element="#none"/>` +
 			`</operation></interface></description>`),
 	})
-	if err == nil || !strings.Contains(err.Error(), "WSDL20_MEP_OUTPUT") {
+	var diagnostics wsdl.Diagnostics
+	if err == nil || err.Error() != "wsdl compile: failed" || !errors.As(err, &diagnostics) {
 		t.Fatalf("Compile(invalid) error = %v", err)
+	}
+	found := false
+	for _, diagnostic := range diagnostics {
+		if diagnostic.Code == "WSDL20_MEP_OUTPUT" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("Compile(invalid) diagnostics = %#v", diagnostics)
 	}
 }
 

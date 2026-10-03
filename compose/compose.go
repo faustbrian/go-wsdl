@@ -9,6 +9,7 @@ import (
 	"sort"
 
 	wsdl "github.com/faustbrian/go-wsdl"
+	"github.com/faustbrian/go-wsdl/internal/errorprivacy"
 	xsd "github.com/faustbrian/go-xsd"
 )
 
@@ -33,15 +34,7 @@ type ConflictError struct {
 }
 
 func (e *ConflictError) Error() string {
-	if e == nil || len(e.Conflicts) == 0 {
-		return ErrConflict.Error()
-	}
-	return fmt.Sprintf(
-		"%s: %s %q",
-		ErrConflict,
-		e.Conflicts[0].Kind,
-		e.Conflicts[0].Name,
-	)
+	return ErrConflict.Error()
 }
 
 func (e *ConflictError) Is(target error) bool { return target == ErrConflict }
@@ -60,17 +53,17 @@ func Merge(documents ...*wsdl.Document) (*wsdl.Document, error) {
 	namespace := documentNamespace(documents[0])
 	for _, document := range documents[1:] {
 		if document.Version() != version {
-			return nil, fmt.Errorf(
+			return nil, errorprivacy.Wrap("wsdl compose: version mismatch", fmt.Errorf(
 				"%w: %s and %s", ErrVersion, version, document.Version(),
-			)
+			))
 		}
 		if documentNamespace(document) != namespace {
-			return nil, fmt.Errorf(
+			return nil, errorprivacy.Wrap("wsdl compose: namespace mismatch", fmt.Errorf(
 				"%w: %q and %q",
 				ErrNamespace,
 				namespace,
 				documentNamespace(document),
-			)
+			))
 		}
 	}
 	if version == wsdl.Version11 {
@@ -79,7 +72,7 @@ func Merge(documents ...*wsdl.Document) (*wsdl.Document, error) {
 	if version == wsdl.Version20 {
 		return merge20(documents)
 	}
-	return nil, fmt.Errorf("%w: unsupported version %q", ErrVersion, version)
+	return nil, errorprivacy.Wrap("wsdl compose: version mismatch", fmt.Errorf("%w: unsupported version %q", ErrVersion, version))
 }
 
 func merge20(documents []*wsdl.Document) (*wsdl.Document, error) {

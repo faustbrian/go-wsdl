@@ -75,7 +75,7 @@ func TestDeterministicSortHelpersUseEveryKey(t *testing.T) {
 }
 
 func TestCompositionHelpersUseCompleteDeterministicKeys(t *testing.T) {
-	if got := (&ConflictError{Conflicts: []Conflict{{Kind: "service", Name: "API"}}}).Error(); got != `wsdl compose: component conflict: service "API"` {
+	if got := (&ConflictError{Conflicts: []Conflict{{Kind: "service", Name: "API"}}}).Error(); got != ErrConflict.Error() {
 		t.Fatalf("ConflictError.Error() = %q", got)
 	}
 	if got := componentName11(struct{}{}); got != "" {
