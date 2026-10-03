@@ -4,6 +4,12 @@
 
 ### Fixed
 
+- Honor parser cancellation before owned buffered-tree conversion, during
+  recursive tree checks, at version-model conversion admission, and before
+  successful document publication. Cancellation preserves its inspectable cause
+  without publishing a partial document. Nested model conversion and XML
+  serialization remain bounded phases without per-loop cancellation checks.
+
 - Stop resolver-chain fallback after caller cancellation without invoking a
   subsequent lookup, while preserving successful and terminal-error results.
 

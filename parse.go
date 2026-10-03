@@ -51,6 +51,11 @@ type ParseOptions struct {
 // Parse decodes one WSDL document without loading external resources.
 func Parse(ctx context.Context, source []byte, options ParseOptions) (*Document, error) {
 	document, err := parse(ctx, source, options)
+	if err == nil && ctx != nil {
+		if stopped := ctx.Err(); stopped != nil {
+			document, err = nil, stopped
+		}
+	}
 	return document, errorprivacy.Wrap("wsdl: parse failed", err)
 }
 
@@ -100,6 +105,11 @@ func parse(ctx context.Context, source []byte, options ParseOptions) (*Document,
 		return nil, fmt.Errorf("%w: document bytes exceed %d", ErrLimitExceeded, limit)
 	}
 
+	if ctx != nil {
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+	}
 	if _, err := xmlwire.Root(source, xmlwire.DecodeOptions{
 		MaxBytes: limit, MaxDepth: options.MaxDepth, CharsetReader: xmlwire.CharsetReader,
 	}); err != nil {
@@ -116,12 +126,18 @@ func parse(ctx context.Context, source []byte, options ParseOptions) (*Document,
 	decoder.Entity = map[string]string{}
 	decoder.CharsetReader = xmlwire.CharsetReader
 	for {
+		if err := state.contextError(); err != nil {
+			return nil, err
+		}
 		token, err := decoderToken(decoder)
 		if err != nil {
 			if errors.Is(err, io.EOF) {
 				return nil, errors.New("wsdl: document has no root element")
 			}
 			return nil, fmt.Errorf("wsdl: parse XML: %w", err)
+		}
+		if err := state.contextError(); err != nil {
+			return nil, err
 		}
 		switch value := token.(type) {
 		case nil:
@@ -154,17 +170,23 @@ func parseDefinitions11(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateCoreNCNames(root, NamespaceWSDL11); err != nil {
+	if err := validateCoreNCNames(root, NamespaceWSDL11, state); err != nil {
 		return nil, err
 	}
-	if err := enforceComponentLimits(root, NamespaceWSDL11, state.options); err != nil {
+	if err := enforceComponentLimits(root, NamespaceWSDL11, state.options, state); err != nil {
 		return nil, err
 	}
-	if err := assignBaseURIs(root, state.options.SystemID); err != nil {
+	if err := assignBaseURIs(root, state.options.SystemID, state); err != nil {
+		return nil, err
+	}
+	if err := state.contextError(); err != nil {
 		return nil, err
 	}
 	definitions, err := decodeDefinitions11(root, state)
 	if err != nil {
+		return nil, err
+	}
+	if err := state.contextError(); err != nil {
 		return nil, err
 	}
 	return &Document{
@@ -181,17 +203,23 @@ func parseDescription20(
 	if err != nil {
 		return nil, err
 	}
-	if err := validateCoreNCNames(root, NamespaceWSDL20); err != nil {
+	if err := validateCoreNCNames(root, NamespaceWSDL20, state); err != nil {
 		return nil, err
 	}
-	if err := enforceComponentLimits(root, NamespaceWSDL20, state.options); err != nil {
+	if err := enforceComponentLimits(root, NamespaceWSDL20, state.options, state); err != nil {
 		return nil, err
 	}
-	if err := assignBaseURIs(root, state.options.SystemID); err != nil {
+	if err := assignBaseURIs(root, state.options.SystemID, state); err != nil {
+		return nil, err
+	}
+	if err := state.contextError(); err != nil {
 		return nil, err
 	}
 	description, err := decodeDescription20(state.ctx, root, state.options)
 	if err != nil {
+		return nil, err
+	}
+	if err := state.contextError(); err != nil {
 		return nil, err
 	}
 	return &Document{

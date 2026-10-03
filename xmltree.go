@@ -30,7 +30,10 @@ var (
 	escapeXMLText = xml.EscapeText
 )
 
-func assignBaseURIs(node *xmlNode, inherited string) error {
+func assignBaseURIs(node *xmlNode, inherited string, owner ...*parseState) error {
+	if err := parseOwnerError(owner); err != nil {
+		return err
+	}
 	base := inherited
 	if reference, exists := xmlBaseReference(node.attributes); exists {
 		resolved, err := resolveURI(inherited, reference)
@@ -41,7 +44,7 @@ func assignBaseURIs(node *xmlNode, inherited string) error {
 	}
 	node.baseURI = base
 	for _, child := range node.children {
-		if err := assignBaseURIs(child, base); err != nil {
+		if err := assignBaseURIs(child, base, owner...); err != nil {
 			return err
 		}
 	}
@@ -88,6 +91,21 @@ type parseState struct {
 	textBytes  int64
 }
 
+func (s *parseState) contextError() error {
+	if s == nil || s.ctx == nil {
+		return nil
+	}
+	return s.ctx.Err()
+}
+
+// Tree helpers also serve intentionally context-free internal model fixtures.
+func parseOwnerError(owner []*parseState) error {
+	if len(owner) == 0 {
+		return nil
+	}
+	return owner[0].contextError()
+}
+
 type componentCounts struct {
 	imports    int
 	operations int
@@ -96,9 +114,15 @@ type componentCounts struct {
 	extensions int
 }
 
-func validateCoreNCNames(node *xmlNode, coreNamespace string) error {
+func validateCoreNCNames(node *xmlNode, coreNamespace string, owner ...*parseState) error {
+	if err := parseOwnerError(owner); err != nil {
+		return err
+	}
 	if node.name.Space == coreNamespace {
 		for _, local := range []string{"name", "messageLabel"} {
+			if err := parseOwnerError(owner); err != nil {
+				return err
+			}
 			value, exists := node.namespacedAttribute("", local)
 			if !exists {
 				continue
@@ -115,7 +139,7 @@ func validateCoreNCNames(node *xmlNode, coreNamespace string) error {
 		}
 	}
 	for _, child := range node.children {
-		if err := validateCoreNCNames(child, coreNamespace); err != nil {
+		if err := validateCoreNCNames(child, coreNamespace, owner...); err != nil {
 			return err
 		}
 	}
@@ -126,9 +150,16 @@ func enforceComponentLimits(
 	root *xmlNode,
 	coreNamespace string,
 	options ParseOptions,
+	owner ...*parseState,
 ) error {
+	if err := parseOwnerError(owner); err != nil {
+		return err
+	}
 	counts := componentCounts{}
-	countComponents(root, coreNamespace, false, &counts)
+	countComponents(root, coreNamespace, false, &counts, owner...)
+	if err := parseOwnerError(owner); err != nil {
+		return err
+	}
 	limits := []struct {
 		name  string
 		count int
@@ -158,7 +189,11 @@ func countComponents(
 	coreNamespace string,
 	parentCore bool,
 	counts *componentCounts,
+	owner ...*parseState,
 ) {
+	if parseOwnerError(owner) != nil {
+		return
+	}
 	core := node.name.Space == coreNamespace
 	if core {
 		switch node.name.Local {
@@ -172,6 +207,9 @@ func countComponents(
 			counts.endpoints++
 		}
 		for _, attribute := range node.attributes {
+			if parseOwnerError(owner) != nil {
+				return
+			}
 			if attribute.Name.Space != "" && attribute.Name.Space != "xmlns" &&
 				attribute.Name.Space != coreNamespace &&
 				attribute.Name.Space != "http://www.w3.org/XML/1998/namespace" {
@@ -183,7 +221,10 @@ func countComponents(
 		counts.extensions++
 	}
 	for _, child := range node.children {
-		countComponents(child, coreNamespace, core, counts)
+		if parseOwnerError(owner) != nil {
+			return
+		}
+		countComponents(child, coreNamespace, core, counts, owner...)
 	}
 }
 
@@ -302,6 +343,9 @@ func readXMLNode(
 	state *parseState,
 	depth int,
 ) (*xmlNode, error) {
+	if err := state.contextError(); err != nil {
+		return nil, err
+	}
 	state.elements++
 	state.attributes += len(start.Attr)
 	if depth > state.options.MaxDepth {
@@ -326,6 +370,9 @@ func readXMLNode(
 		},
 	}
 	for _, attribute := range start.Attr {
+		if err := state.contextError(); err != nil {
+			return nil, err
+		}
 		if attribute.Name.Space == "xmlns" {
 			node.namespaces[attribute.Name.Local] = attribute.Value
 			continue
@@ -336,9 +383,15 @@ func readXMLNode(
 	}
 
 	for {
+		if err := state.contextError(); err != nil {
+			return nil, err
+		}
 		token, err := decoder.Token()
 		if err != nil {
 			return nil, fmt.Errorf("wsdl: parse {%s}%s: %w", start.Name.Space, start.Name.Local, err)
+		}
+		if err := state.contextError(); err != nil {
+			return nil, err
 		}
 		switch value := token.(type) {
 		case xml.Directive:
@@ -348,7 +401,10 @@ func readXMLNode(
 			if err != nil {
 				return nil, err
 			}
-			inheritNamespaces(child, node.namespaces)
+			inheritNamespaces(child, node.namespaces, state)
+			if err := state.contextError(); err != nil {
+				return nil, err
+			}
 			node.children = append(node.children, child)
 			node.content = append(node.content, xmlContent{child: child})
 		case xml.CharData:
@@ -367,14 +423,23 @@ func readXMLNode(
 	}
 }
 
-func inheritNamespaces(node *xmlNode, inherited map[string]string) {
+func inheritNamespaces(node *xmlNode, inherited map[string]string, owner ...*parseState) {
+	if parseOwnerError(owner) != nil {
+		return
+	}
 	for prefix, namespace := range inherited {
+		if parseOwnerError(owner) != nil {
+			return
+		}
 		if _, exists := node.namespaces[prefix]; !exists {
 			node.namespaces[prefix] = namespace
 		}
 	}
 	for _, child := range node.children {
-		inheritNamespaces(child, node.namespaces)
+		if parseOwnerError(owner) != nil {
+			return
+		}
+		inheritNamespaces(child, node.namespaces, owner...)
 	}
 }
 
