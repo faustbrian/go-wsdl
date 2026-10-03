@@ -4,6 +4,13 @@
 
 ### Fixed
 
+- Check cancellation between compiler-owned reference, model, inheritance,
+  graph, and schema-reference operations and before compilation success,
+  including schema-free descriptions. Observed cancellation returns no
+  partial compiled set and does not poison reusable compiler state.
+  Context-independent model validation, XSD calls, and standard-library
+  sorting remain cooperative call boundaries, not preemptively interrupted.
+
 - Honor parser cancellation before owned buffered-tree conversion, during
   recursive tree checks, at version-model conversion admission, and before
   successful document publication. Cancellation preserves its inspectable cause

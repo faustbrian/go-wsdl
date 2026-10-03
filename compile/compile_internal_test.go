@@ -14,6 +14,99 @@ import (
 	xsdresolve "github.com/faustbrian/go-xsd/resolve"
 )
 
+func TestBuildSetObservesModelCancellationAndRemainsReusable(t *testing.T) {
+	models := []struct {
+		name string
+		make func() (*wsdl.Document, error)
+	}{
+		{"1.1", func() (*wsdl.Document, error) {
+			return wsdl.NewDocument11(wsdl.Definitions11{TargetNamespace: "urn:test", PortTypes: []wsdl.PortType11{{Name: "Ordinary"}}}, wsdl.ValidationOptions{})
+		}},
+		{"2.0", func() (*wsdl.Document, error) {
+			return wsdl.NewDocument20(wsdl.Description20{TargetNamespace: "urn:test", Interfaces: []wsdl.Interface20{{Name: "Ordinary"}}}, wsdl.ValidationOptions{})
+		}},
+	}
+	for _, model := range models {
+		t.Run(model.name, func(t *testing.T) {
+			document, err := model.make()
+			if err != nil {
+				t.Fatal(err)
+			}
+			compiler, err := New(Options{})
+			if err != nil {
+				t.Fatal(err)
+			}
+			state := compileState{compiler: compiler, resources: map[string]*resourceDocument{"urn:ordinary": {document: document}}}
+			ctx, cancel := context.WithCancel(context.Background())
+			cancel()
+			set, err := state.buildSet(ctx)
+			if set != nil || !errors.Is(err, context.Canceled) {
+				t.Fatalf("canceled model construction = %v, %v; want nil set and context.Canceled", set, err)
+			}
+			set, err = state.buildSet(context.Background())
+			if err != nil || set == nil || len(set.interfaces) != 1 || set.interfaces[0].Name != (wsdl.QName{Namespace: "urn:test", Local: "Ordinary"}) {
+				t.Fatalf("model construction after cancellation = %v, %v; want exact ordinary interface", set, err)
+			}
+		})
+	}
+}
+
+func TestCompilerOwnedGraphPhasesObserveCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	parent := wsdl.QName{Namespace: "urn:test", Local: "Parent"}
+	child := wsdl.QName{Namespace: "urn:test", Local: "Child"}
+	interfaces := []Interface{
+		{Name: parent, Operations: []Operation{{Name: "Call", Pattern: "urn:ordinary"}}},
+		{Name: child, Extends: []wsdl.QName{parent}},
+	}
+	added, err := expandInterfaceInheritance(&compilationWalk{ctx: ctx}, interfaces)
+	if added != 0 || !errors.Is(err, context.Canceled) || len(interfaces[1].Operations) != 0 {
+		t.Fatalf("canceled inheritance = %d, %v, %#v; want no inherited members", added, err, interfaces)
+	}
+	added, err = expandInterfaceInheritance(&compilationWalk{ctx: context.Background()}, interfaces)
+	if err != nil || added != 1 || len(interfaces[1].Operations) != 1 || interfaces[1].Operations[0].Name != "Call" {
+		t.Fatalf("ordinary inheritance after cancellation = %d, %v, %#v", added, err, interfaces)
+	}
+	set := &Set{interfaces: interfaces}
+	names := map[wsdl.QName]struct{}{parent: {}, child: {}}
+	if err := validateGraph(&compilationWalk{ctx: ctx}, set, names, nil); !errors.Is(err, context.Canceled) {
+		t.Fatalf("canceled graph validation = %v; want context.Canceled", err)
+	}
+	if err := validateGraph(&compilationWalk{ctx: context.Background()}, set, names, nil); err != nil {
+		t.Fatalf("ordinary graph validation = %v", err)
+	}
+	document, err := wsdl.NewDocument20(wsdl.Description20{
+		TargetNamespace: "urn:test", Interfaces: []wsdl.Interface20{{Name: "Ordinary"}},
+	}, wsdl.ValidationOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	compiler, err := New(Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	state := compileState{compiler: compiler, resources: map[string]*resourceDocument{"urn:ordinary": {document: document}}}
+	walk := &compilationWalk{ctx: ctx}
+	if references := documentReferences(walk, document); references != nil || !errors.Is(walk.err, context.Canceled) {
+		t.Fatalf("canceled reference scan = %v, %v", references, walk.err)
+	}
+	if err := validateSchemaReferences20(&compilationWalk{ctx: ctx}, state.resources, nil); !errors.Is(err, context.Canceled) {
+		t.Fatalf("canceled schema reference validation = %v", err)
+	}
+	if err := validateSchemaReferences20(&compilationWalk{ctx: context.Background()}, state.resources, nil); err != nil {
+		t.Fatalf("ordinary schema reference validation = %v", err)
+	}
+	schemas, err := state.compileSchemas(ctx, []string{"urn:ordinary"})
+	if schemas != nil || !errors.Is(err, context.Canceled) {
+		t.Fatalf("canceled schema-free phase = %v, %v; want nil and context.Canceled", schemas, err)
+	}
+	schemas, err = state.compileSchemas(context.Background(), []string{"urn:ordinary"})
+	if schemas != nil || err != nil {
+		t.Fatalf("ordinary schema-free phase = %v, %v; want nil and nil", schemas, err)
+	}
+}
+
 func TestCompilerRejectsEveryNegativeSchemaLimit(t *testing.T) {
 	t.Parallel()
 
@@ -68,7 +161,7 @@ func TestInterfaceInheritanceRejectsBrokenGraphs(t *testing.T) {
 	for name, interfaces := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			if _, err := expandInterfaceInheritance(interfaces); err == nil {
+			if _, err := expandInterfaceInheritance(&compilationWalk{ctx: context.Background()}, interfaces); err == nil {
 				t.Fatal("expandInterfaceInheritance() error = nil")
 			}
 		})
@@ -87,7 +180,7 @@ func TestInterfaceInheritanceDeduplicatesIdenticalMembers(t *testing.T) {
 			Extends:    []wsdl.QName{{Namespace: ns, Local: "Parent"}},
 			Operations: []Operation{operation}, Faults: []wsdl.QName{fault}},
 	}
-	added, err := expandInterfaceInheritance(interfaces)
+	added, err := expandInterfaceInheritance(&compilationWalk{ctx: context.Background()}, interfaces)
 	if err != nil {
 		t.Fatalf("expandInterfaceInheritance() error = %v", err)
 	}
@@ -99,7 +192,7 @@ func TestInterfaceInheritanceDeduplicatesIdenticalMembers(t *testing.T) {
 		{Name: wsdl.QName{Namespace: ns, Local: "Parent"}, Operations: []Operation{operation}, Faults: []wsdl.QName{fault}},
 		{Name: wsdl.QName{Namespace: ns, Local: "Child"}, Extends: []wsdl.QName{{Namespace: ns, Local: "Parent"}}},
 	}
-	added, err = expandInterfaceInheritance(inherited)
+	added, err = expandInterfaceInheritance(&compilationWalk{ctx: context.Background()}, inherited)
 	if err != nil {
 		t.Fatalf("expandInterfaceInheritance(unique) error = %v", err)
 	}
@@ -128,7 +221,7 @@ func TestGraphValidationRejectsEveryDanglingReference(t *testing.T) {
 	for name, set := range tests {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
-			if err := validateGraph(set, interfaces, bindings); !errors.Is(err, ErrUnresolvedComponent) {
+			if err := validateGraph(&compilationWalk{ctx: context.Background()}, set, interfaces, bindings); !errors.Is(err, ErrUnresolvedComponent) {
 				t.Fatalf("validateGraph() error = %v", err)
 			}
 		})
@@ -159,15 +252,15 @@ func TestOperationMessageDefaultsCoverEveryWSDL11Style(t *testing.T) {
 func TestRPCMessageShapeRequiresOneCompiledWrapper(t *testing.T) {
 	t.Parallel()
 
-	empty, err := rpcMessageShape("Call", "input", nil, nil)
+	empty, err := rpcMessageShape(&compilationWalk{ctx: context.Background()}, "Call", "input", nil, nil)
 	if err != nil || len(empty.elements) != 0 {
 		t.Fatalf("rpcMessageShape(empty) = (%#v, %v)", empty, err)
 	}
 	messages := []wsdl.InterfaceMessageReference20{{Element: wsdl.QName{Namespace: "urn:test", Local: "Call"}}}
-	if _, err := rpcMessageShape("Call", "input", messages, nil); !errors.Is(err, ErrInvalidRPCStyle) {
+	if _, err := rpcMessageShape(&compilationWalk{ctx: context.Background()}, "Call", "input", messages, nil); !errors.Is(err, ErrInvalidRPCStyle) {
 		t.Fatalf("rpcMessageShape(uncompiled) error = %v", err)
 	}
-	if _, err := rpcMessageShape("Call", "input", append(messages, messages[0]), nil); !errors.Is(err, ErrInvalidRPCStyle) {
+	if _, err := rpcMessageShape(&compilationWalk{ctx: context.Background()}, "Call", "input", append(messages, messages[0]), nil); !errors.Is(err, ErrInvalidRPCStyle) {
 		t.Fatalf("rpcMessageShape(multiple) error = %v", err)
 	}
 }
@@ -194,7 +287,7 @@ func TestWSDL11CompilationPreservesSolicitResponseFaultDirection(t *testing.T) {
 		Output: &wsdl.OperationMessage11{Message: wsdl.QName{Namespace: "urn:test", Local: "Request"}},
 		Faults: []wsdl.OperationMessage11{{Name: "Failure", Message: wsdl.QName{Namespace: "urn:test", Local: "Fault"}}},
 	}
-	compiled := compileOperation11(operation, map[wsdl.QName]Message{
+	compiled := compileOperation11(&compilationWalk{ctx: context.Background()}, operation, map[wsdl.QName]Message{
 		operation.Input.Message:  {Name: operation.Input.Message},
 		operation.Output.Message: {Name: operation.Output.Message},
 	})
@@ -231,13 +324,13 @@ func TestBindingOperationResolutionUsesPortTypeAndMessageNames(t *testing.T) {
 			`<description xmlns="http://www.w3.org/ns/wsdl" targetNamespace="urn:test"/>`)},
 	}
 	port := wsdl.QName{Namespace: "urn:test", Local: "Port"}
-	resolved := compileBindingOperationReference11(wsdl.BindingOperation11{
+	resolved := compileBindingOperationReference11(&compilationWalk{ctx: context.Background()}, wsdl.BindingOperation11{
 		Name: "Call", Input: &wsdl.BindingMessage11{Name: "Second"},
 	}, port, resources)
 	if resolved.Input != "Second" || resolved.Output != "CallResponse" {
 		t.Fatalf("compileBindingOperationReference11() = %#v", resolved)
 	}
-	fallback := compileBindingOperationReference11(wsdl.BindingOperation11{
+	fallback := compileBindingOperationReference11(&compilationWalk{ctx: context.Background()}, wsdl.BindingOperation11{
 		Name: "Missing", Output: &wsdl.BindingMessage11{Name: "Result"},
 	}, port, resources)
 	if fallback.Name != "Missing" || fallback.Output != "Result" {
@@ -269,7 +362,7 @@ func TestLegacyWSDL20MessageReferenceRemainsCompilable(t *testing.T) {
 func TestSchemaWrapperPreservesIncludesAndImports(t *testing.T) {
 	t.Parallel()
 
-	content, err := schemaWrapper(
+	content, err := schemaWrapper(&compilationWalk{ctx: context.Background()},
 		[]inlineSchemaSource{
 			{uri: "urn:no-namespace"},
 			{uri: "urn:typed", namespace: "urn:types&more"},
@@ -309,26 +402,26 @@ func TestSchemaReferenceHelpersRejectUnknownComponents(t *testing.T) {
 	t.Parallel()
 
 	missing := wsdl.QName{Namespace: "urn:test", Local: "Missing"}
-	if err := validateBindingMessageSchema20(
+	if err := validateBindingMessageSchema20(&compilationWalk{ctx: context.Background()},
 		wsdl.BindingMessageReference20{SOAP: &wsdl.SOAPMessageBinding20{
 			Headers: []wsdl.SOAPHeader20{{Element: missing}},
 		}}, nil, nil,
 	); !errors.Is(err, ErrUnresolvedComponent) {
 		t.Fatalf("validateBindingMessageSchema20(SOAP) error = %v", err)
 	}
-	if err := validateBindingMessageSchema20(
+	if err := validateBindingMessageSchema20(&compilationWalk{ctx: context.Background()},
 		wsdl.BindingMessageReference20{HTTP: &wsdl.HTTPMessageBinding20{
 			Headers: []wsdl.HTTPHeader20{{Type: missing}},
 		}}, nil, nil,
 	); !errors.Is(err, ErrUnresolvedComponent) {
 		t.Fatalf("validateBindingMessageSchema20(HTTP) error = %v", err)
 	}
-	if err := validateHTTPHeaderTypes20(
+	if err := validateHTTPHeaderTypes20(&compilationWalk{ctx: context.Background()},
 		[]wsdl.HTTPHeader20{{Type: wsdl.QName{Namespace: wsdl.NamespaceXMLSchema, Local: "string"}}}, nil,
 	); err != nil {
 		t.Fatalf("validateHTTPHeaderTypes20(built-in) error = %v", err)
 	}
-	if err := validateBindingMessageSchema20(wsdl.BindingMessageReference20{}, nil, nil); err != nil {
+	if err := validateBindingMessageSchema20(&compilationWalk{ctx: context.Background()}, wsdl.BindingMessageReference20{}, nil, nil); err != nil {
 		t.Fatalf("validateBindingMessageSchema20(empty) error = %v", err)
 	}
 }
@@ -380,10 +473,10 @@ func TestOperationStyleSchemaRequiresCompiledWrapper(t *testing.T) {
 	message := wsdl.InterfaceMessageReference20{
 		Element: wsdl.QName{Namespace: "urn:test", Local: "Call"},
 	}
-	if err := validateOperationStyleSchema20(wsdl.StyleIRI, "Call", message, nil); !errors.Is(err, ErrInvalidIRIStyle) {
+	if err := validateOperationStyleSchema20(&compilationWalk{ctx: context.Background()}, wsdl.StyleIRI, "Call", message, nil); !errors.Is(err, ErrInvalidIRIStyle) {
 		t.Fatalf("validateOperationStyleSchema20(IRI) error = %v", err)
 	}
-	if err := validateOperationStyleSchema20(wsdl.StyleMultipart, "Call", message, nil); !errors.Is(err, ErrInvalidMultipartStyle) {
+	if err := validateOperationStyleSchema20(&compilationWalk{ctx: context.Background()}, wsdl.StyleMultipart, "Call", message, nil); !errors.Is(err, ErrInvalidMultipartStyle) {
 		t.Fatalf("validateOperationStyleSchema20(multipart) error = %v", err)
 	}
 }
@@ -393,22 +486,22 @@ func TestIRISimpleTypeRulesCoverInlineAndBuiltInTypes(t *testing.T) {
 
 	stringType := xsd.QName{Namespace: xsd.Namespace, Local: "string"}
 	qNameType := xsd.QName{Namespace: xsd.Namespace, Local: "QName"}
-	if !iriSimpleElementAllowed(xsd.Element{Type: stringType}, nil) {
+	if !iriSimpleElementAllowed(&compilationWalk{ctx: context.Background()}, xsd.Element{Type: stringType}, nil) {
 		t.Fatal("xs:string was rejected")
 	}
-	if iriSimpleElementAllowed(xsd.Element{Type: qNameType}, nil) {
+	if iriSimpleElementAllowed(&compilationWalk{ctx: context.Background()}, xsd.Element{Type: qNameType}, nil) {
 		t.Fatal("xs:QName was accepted")
 	}
-	if iriSimpleElementAllowed(xsd.Element{Type: xsd.QName{Namespace: xsd.Namespace, Local: "anyType"}}, nil) {
+	if iriSimpleElementAllowed(&compilationWalk{ctx: context.Background()}, xsd.Element{Type: xsd.QName{Namespace: xsd.Namespace, Local: "anyType"}}, nil) {
 		t.Fatal("xs:anyType was accepted")
 	}
-	if iriSimpleElementAllowed(xsd.Element{}, nil) {
+	if iriSimpleElementAllowed(&compilationWalk{ctx: context.Background()}, xsd.Element{}, nil) {
 		t.Fatal("untyped element was accepted")
 	}
-	if !iriSimpleElementAllowed(xsd.Element{InlineSimpleType: &xsd.SimpleType{}}, nil) {
+	if !iriSimpleElementAllowed(&compilationWalk{ctx: context.Background()}, xsd.Element{InlineSimpleType: &xsd.SimpleType{}}, nil) {
 		t.Fatal("inline simple type was rejected")
 	}
-	if iriSimpleElementAllowed(xsd.Element{
+	if iriSimpleElementAllowed(&compilationWalk{ctx: context.Background()}, xsd.Element{
 		InlineSimpleType: &xsd.SimpleType{InlineBase: &xsd.SimpleType{Base: qNameType}},
 	}, nil) {
 		t.Fatal("inline QName-derived type was accepted")
@@ -416,7 +509,7 @@ func TestIRISimpleTypeRulesCoverInlineAndBuiltInTypes(t *testing.T) {
 	if forbiddenIRIPrimitive(xsd.QName{Namespace: "urn:other", Local: "QName"}) {
 		t.Fatal("foreign QName type was treated as XML Schema QName")
 	}
-	if iriSimpleTypeForbidden(xsd.SimpleType{Base: stringType}, &xsdcompile.Set{}, nil) {
+	if iriSimpleTypeForbidden(&compilationWalk{ctx: context.Background()}, xsd.SimpleType{Base: stringType}, &xsdcompile.Set{}, nil) {
 		t.Fatal("xs:string-derived type was rejected")
 	}
 }
@@ -434,7 +527,7 @@ func TestComponentCountersIncludeEveryNestedWSDL20Component(t *testing.T) {
 			OutFaults: []wsdl.InterfaceFaultReference20{{Ref: wsdl.QName{Local: "Failure"}}},
 		}},
 	}
-	if count := countInterface20Components(interfaceValue); count != 7 {
+	if count := countInterface20Components(&compilationWalk{ctx: context.Background()}, interfaceValue); count != 7 {
 		t.Fatalf("countInterface20Components() = %d, want 7", count)
 	}
 	bindingValue := wsdl.Binding20{
@@ -447,7 +540,7 @@ func TestComponentCountersIncludeEveryNestedWSDL20Component(t *testing.T) {
 			OutFaults: []wsdl.BindingFaultReference20{{Ref: wsdl.QName{Local: "Failure"}}},
 		}},
 	}
-	if count := countBinding20Components(bindingValue); count != 7 {
+	if count := countBinding20Components(&compilationWalk{ctx: context.Background()}, bindingValue); count != 7 {
 		t.Fatalf("countBinding20Components() = %d, want 7", count)
 	}
 }
@@ -783,7 +876,7 @@ func TestBindingOperationResolutionSkipsForeignDocumentsAndOutputMismatches(t *t
 		` targetNamespace="urn:test"><portType name="Other"/></definitions>`)
 	version20 := mustParseDocument(t, `<description xmlns="http://www.w3.org/ns/wsdl"`+
 		` targetNamespace="urn:test"/>`)
-	resolved := compileBindingOperationReference11(wsdl.BindingOperation11{
+	resolved := compileBindingOperationReference11(&compilationWalk{ctx: context.Background()}, wsdl.BindingOperation11{
 		Name: "Call", Input: &wsdl.BindingMessage11{Name: "Input"},
 		Output: &wsdl.BindingMessage11{Name: "Mismatch"},
 	}, wsdl.QName{Namespace: "urn:test", Local: "Port"}, map[string]*resourceDocument{
@@ -874,7 +967,7 @@ func TestSchemaWrapperPropagatesEveryEscapeFailure(t *testing.T) {
 	}
 	for name, test := range tests {
 		t.Run(name, func(t *testing.T) {
-			if _, err := schemaWrapper(test.sources, test.imports); !errors.Is(err, injected) {
+			if _, err := schemaWrapper(&compilationWalk{ctx: context.Background()}, test.sources, test.imports); !errors.Is(err, injected) {
 				t.Fatalf("schemaWrapper() error = %v", err)
 			}
 		})
@@ -910,7 +1003,7 @@ func TestSchemaReferenceValidationRejectsEveryWSDLReferenceShape(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Parallel()
 			document := mustParseDocument(t, source)
-			err := validateSchemaReferences20(map[string]*resourceDocument{
+			err := validateSchemaReferences20(&compilationWalk{ctx: context.Background()}, map[string]*resourceDocument{
 				"urn:test": {document: document},
 			}, nil)
 			if !errors.Is(err, ErrUnresolvedComponent) {
@@ -927,7 +1020,7 @@ func TestOperationStyleAndRPCSchemaHelpersCoverMissingShapes(t *testing.T) {
 		` targetNamespace="urn:test"><interface name="API"><operation name="Call"`+
 		` pattern="urn:none" style="http://www.w3.org/ns/wsdl/style/iri"/>`+
 		`</interface></description>`)
-	if err := validateOperationStyleSchemas20(map[string]*resourceDocument{
+	if err := validateOperationStyleSchemas20(&compilationWalk{ctx: context.Background()}, map[string]*resourceDocument{
 		"urn:test": {document: document},
 	}, nil); err != nil {
 		t.Fatalf("validateOperationStyleSchemas20() error = %v", err)
@@ -936,14 +1029,14 @@ func TestOperationStyleAndRPCSchemaHelpersCoverMissingShapes(t *testing.T) {
 	message := wsdl.InterfaceMessageReference20{
 		Element: wsdl.QName{Namespace: "urn:test", Local: "Missing"},
 	}
-	if err := validateOperationStyleSchema20(wsdl.StyleIRI, "Call", message, emptySchemas); !errors.Is(err, ErrInvalidIRIStyle) {
+	if err := validateOperationStyleSchema20(&compilationWalk{ctx: context.Background()}, wsdl.StyleIRI, "Call", message, emptySchemas); !errors.Is(err, ErrInvalidIRIStyle) {
 		t.Fatalf("validateOperationStyleSchema20() error = %v", err)
 	}
-	if _, err := rpcMessageShape("Call", "input", []wsdl.InterfaceMessageReference20{message}, emptySchemas); !errors.Is(err, ErrInvalidRPCStyle) {
+	if _, err := rpcMessageShape(&compilationWalk{ctx: context.Background()}, "Call", "input", []wsdl.InterfaceMessageReference20{message}, emptySchemas); !errors.Is(err, ErrInvalidRPCStyle) {
 		t.Fatalf("rpcMessageShape() error = %v", err)
 	}
 	missing := wsdl.QName{Namespace: "urn:test", Local: "Missing"}
-	if err := validateRPCSignature20(wsdl.InterfaceOperation20{Name: "Call"},
+	if err := validateRPCSignature20(&compilationWalk{ctx: context.Background()}, wsdl.InterfaceOperation20{Name: "Call"},
 		rpcMessageShape20{elements: map[wsdl.QName]xsd.QName{missing: {}}},
 		rpcMessageShape20{elements: map[wsdl.QName]xsd.QName{}}); !errors.Is(err, ErrInvalidRPCStyle) {
 		t.Fatalf("validateRPCSignature20() error = %v", err)
@@ -967,7 +1060,7 @@ func TestRPCSharedParametersRequireNamedMatchingTypes(t *testing.T) {
 		"unnamed output": {namedType, {}},
 	}
 	for testName, types := range tests {
-		err := validateRPCSignature20(
+		err := validateRPCSignature20(&compilationWalk{ctx: context.Background()},
 			operation,
 			rpcMessageShape20{elements: map[wsdl.QName]xsd.QName{name: types[0]}},
 			rpcMessageShape20{elements: map[wsdl.QName]xsd.QName{name: types[1]}},
@@ -988,18 +1081,18 @@ func TestStyleTypeHelpersCoverInlineMissingAndCycleBoundaries(t *testing.T) {
 	if _, ok := elementComplexType(xsd.Element{}, nil); ok {
 		t.Fatal("elementComplexType(empty) succeeded")
 	}
-	if iriSimpleElementAllowed(xsd.Element{InlineComplexType: inlineComplex}, nil) {
+	if iriSimpleElementAllowed(&compilationWalk{ctx: context.Background()}, xsd.Element{InlineComplexType: inlineComplex}, nil) {
 		t.Fatal("iriSimpleElementAllowed(complex) succeeded")
 	}
 	base := xsd.QName{Namespace: "urn:test", Local: "Base"}
 	definition := xsd.SimpleType{Base: base}
-	if iriSimpleTypeForbidden(definition, nil, nil) {
+	if iriSimpleTypeForbidden(&compilationWalk{ctx: context.Background()}, definition, nil, nil) {
 		t.Fatal("iriSimpleTypeForbidden(nil schemas) = true")
 	}
-	if iriSimpleTypeForbidden(definition, &xsdcompile.Set{}, map[xsd.QName]struct{}{base: {}}) {
+	if iriSimpleTypeForbidden(&compilationWalk{ctx: context.Background()}, definition, &xsdcompile.Set{}, map[xsd.QName]struct{}{base: {}}) {
 		t.Fatal("iriSimpleTypeForbidden(cycle) = true")
 	}
-	if iriSimpleTypeForbidden(definition, &xsdcompile.Set{}, make(map[xsd.QName]struct{})) {
+	if iriSimpleTypeForbidden(&compilationWalk{ctx: context.Background()}, definition, &xsdcompile.Set{}, make(map[xsd.QName]struct{})) {
 		t.Fatal("iriSimpleTypeForbidden(missing base) = true")
 	}
 }
@@ -1080,11 +1173,11 @@ func TestIRINamedSimpleTypeFollowsCompiledBase(t *testing.T) {
 		t.Fatal(err)
 	}
 	alias, ok := schemas.SimpleType(xsd.QName{Namespace: "urn:test", Local: "Alias"})
-	if !ok || !iriSimpleTypeForbidden(alias, schemas, make(map[xsd.QName]struct{})) {
+	if !ok || !iriSimpleTypeForbidden(&compilationWalk{ctx: context.Background()}, alias, schemas, make(map[xsd.QName]struct{})) {
 		t.Fatalf("IRI named base = (%#v, %t)", alias, ok)
 	}
 	textAlias, ok := schemas.SimpleType(xsd.QName{Namespace: "urn:test", Local: "TextAlias"})
-	if !ok || iriSimpleTypeForbidden(textAlias, schemas, make(map[xsd.QName]struct{})) {
+	if !ok || iriSimpleTypeForbidden(&compilationWalk{ctx: context.Background()}, textAlias, schemas, make(map[xsd.QName]struct{})) {
 		t.Fatalf("IRI safe named base = (%#v, %t)", textAlias, ok)
 	}
 }
@@ -1110,7 +1203,7 @@ func TestRPCSignatureRejectsEveryCrossDirectionPresence(t *testing.T) {
 		if test.out {
 			output.elements[name] = xsd.QName{Namespace: xsd.Namespace, Local: "string"}
 		}
-		err := validateRPCSignature20(wsdl.InterfaceOperation20{
+		err := validateRPCSignature20(&compilationWalk{ctx: context.Background()}, wsdl.InterfaceOperation20{
 			Name: "Call", RPCSignature: []wsdl.RPCSignatureParameter20{{
 				Name: name, Direction: test.direction,
 			}},
@@ -1134,7 +1227,7 @@ func TestFaultOrderingCoversDeclaredAndInheritedCollections(t *testing.T) {
 		{Name: wsdl.QName{Namespace: namespace, Local: "Child"},
 			Extends: []wsdl.QName{{Namespace: namespace, Local: "Parent"}}},
 	}
-	if _, err := expandInterfaceInheritance(interfaces); err != nil {
+	if _, err := expandInterfaceInheritance(&compilationWalk{ctx: context.Background()}, interfaces); err != nil {
 		t.Fatalf("expandInterfaceInheritance() error = %v", err)
 	}
 	if interfaces[1].Faults[0].Local != "Alpha" {
