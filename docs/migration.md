@@ -12,3 +12,17 @@ version-specific accessor.
 
 Generated-client users should compile a set and consume package `codegen`
 rather than coupling generators to parser internals.
+
+## Pending next-major default-error contract
+
+The unreleased implementation returns categorical library-produced default
+error text rather than embedding input URIs, component names, lexical values
+or collaborator causes. Replace text matching with `errors.Is`/`errors.As`.
+Inspect `Diagnostics` and `ConflictError.Conflicts` explicitly when detailed
+diagnostics are required. Wrapped causes remain available through standard
+unwrapping; redact or authorize that opt-in detail before recording it.
+
+This is not a v1 patch contract. A future major release must adopt the official
+`github.com/faustbrian/go-wsdl/v2` module and import suffix from main, without
+version-specific source directories or branches. That migration and publication
+have not occurred; published v1.0.0 retains the previous default text.

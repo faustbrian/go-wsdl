@@ -1,7 +1,5 @@
 package wsdl
 
-import "strings"
-
 // Severity classifies a validation diagnostic.
 type Severity string
 
@@ -32,16 +30,13 @@ func (d Diagnostics) HasErrors() bool {
 	return false
 }
 
-// Error returns a compact, deterministic summary suitable for error paths.
+// Error returns a category without input-derived diagnostic details.
+// Inspect the diagnostics explicitly for messages, paths and locations.
 func (d Diagnostics) Error() string {
 	if len(d) == 0 {
 		return ""
 	}
-	messages := make([]string, 0, len(d))
-	for _, diagnostic := range d {
-		messages = append(messages, diagnostic.Code+": "+diagnostic.Message)
-	}
-	return strings.Join(messages, "; ")
+	return "wsdl: validation failed"
 }
 
 // Err returns diagnostics as an error when any error diagnostic is present.

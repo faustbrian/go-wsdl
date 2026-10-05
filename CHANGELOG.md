@@ -2,7 +2,18 @@
 
 ## Unreleased
 
+### Fixed
+
+- Stop resolver-chain fallback after caller cancellation without invoking a
+  subsequent lookup, while preserving successful and terminal-error results.
+
 ### Changed
+
+- Make library-produced default error strings categorical; diagnostic messages,
+  paths, locations, conflict details and wrapped causes remain explicitly
+  inspectable. This breaking text contract is intended for the next major
+  release, not a v1 patch; match errors with `errors.Is`/`errors.As` instead of
+  text. The `/v2` module/import migration remains pending.
 
 - Adopt the `go-library-tools` v1.4.0 schema-v2 cohesion contract, local
   `make cohesion` gate, and immutable reusable CI workflow without changing

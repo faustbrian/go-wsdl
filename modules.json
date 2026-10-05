@@ -82,6 +82,18 @@
         },
         {
           "module_directory": ".",
+          "directory": "internal/errorprivacy",
+          "name": "errorprivacy",
+          "import_path": "github.com/faustbrian/go-wsdl/internal/errorprivacy",
+          "kind": "internal",
+          "production": true,
+          "executable": true,
+          "coverage_required": true,
+          "build_required": true,
+          "build_tags": []
+        },
+        {
+          "module_directory": ".",
           "directory": "resolve",
           "name": "resolve",
           "import_path": "github.com/faustbrian/go-wsdl/resolve",

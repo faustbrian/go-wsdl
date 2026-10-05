@@ -98,3 +98,40 @@ func TestResolversCoverNilCancellationAndExhaustion(t *testing.T) {
 		t.Fatalf("Chain.Resolve(canceled) error = %v", err)
 	}
 }
+
+func TestResolverChainStopsBeforeNextLookupAfterCancellation(t *testing.T) {
+	t.Parallel()
+
+	request := resolve.Request{URI: "https://example.test/service.wsdl"}
+	memory, err := resolve.NewMemory(map[string][]byte{request.URI: []byte("service")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	first := resolverFunc(func(context.Context, resolve.Request) (resolve.Resource, error) {
+		cancel()
+		return resolve.Resource{}, resolve.ErrNotFound
+	})
+	nextLookups := 0
+	next := resolverFunc(func(ctx context.Context, request resolve.Request) (resolve.Resource, error) {
+		nextLookups++
+		return memory.Resolve(ctx, request)
+	})
+	resource, err := resolve.Chain(first, next).Resolve(ctx, request)
+	if !errors.Is(err, context.Canceled) {
+		t.Errorf("Resolve() error = %v, want context.Canceled", err)
+	}
+	if resource.URI != "" || resource.Content != nil {
+		t.Errorf("Resolve() returned resource after cancellation: %#v", resource)
+	}
+	if nextLookups != 0 {
+		t.Errorf("next lookup invoked %d times after cancellation, want 0", nextLookups)
+	}
+}
+
+type resolverFunc func(context.Context, resolve.Request) (resolve.Resource, error)
+
+func (f resolverFunc) Resolve(ctx context.Context, request resolve.Request) (resolve.Resource, error) {
+	return f(ctx, request)
+}

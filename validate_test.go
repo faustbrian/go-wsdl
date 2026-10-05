@@ -2,7 +2,6 @@ package wsdl_test
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	wsdl "github.com/faustbrian/go-wsdl"
@@ -170,7 +169,7 @@ func TestValidateWSDL11RejectsEquivalentDefaultedOperationSignatures(t *testing.
 		}}},
 	}
 	document, err := wsdl.NewDocument11(definitions, wsdl.ValidationOptions{})
-	if err == nil || document != nil || !strings.Contains(err.Error(), "WSDL11_OPERATION_DUPLICATE") {
+	if err == nil || document != nil || ordinaryDiagnosticCount(t, err, "WSDL11_OPERATION_DUPLICATE") == 0 {
 		t.Fatalf("NewDocument11() = (%v, %v)", document, err)
 	}
 }

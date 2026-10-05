@@ -2,7 +2,6 @@ package wsdl_test
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	wsdl "github.com/faustbrian/go-wsdl"
@@ -166,7 +165,7 @@ func TestValidateWSDL20PredefinedMessageExchangePatterns(t *testing.T) {
 	for _, code := range []string{
 		"WSDL20_MEP_OUTPUT", "WSDL20_MESSAGE_LABEL", "WSDL20_MEP_OUTFAULT",
 	} {
-		if !strings.Contains(err.Error(), code) {
+		if ordinaryDiagnosticCount(t, err, code) == 0 {
 			t.Errorf("validation error %q does not contain %s", err, code)
 		}
 	}
@@ -193,7 +192,7 @@ func TestValidateWSDL20CustomPatternMessageLabels(t *testing.T) {
 	if err == nil || document != nil {
 		t.Fatalf("NewDocument20() = (%v, %v), want validation error", document, err)
 	}
-	if strings.Count(err.Error(), "WSDL20_MESSAGE_LABEL") != 3 {
+	if ordinaryDiagnosticCount(t, err, "WSDL20_MESSAGE_LABEL") != 3 {
 		t.Fatalf("validation error = %q", err)
 	}
 }

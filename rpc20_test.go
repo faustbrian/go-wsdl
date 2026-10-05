@@ -2,7 +2,6 @@ package wsdl_test
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	wsdl "github.com/faustbrian/go-wsdl"
@@ -101,7 +100,7 @@ func TestValidateWSDL20RPCStyleRules(t *testing.T) {
 		"WSDL20_RPC_MESSAGE_NAMESPACE", "WSDL20_RPC_SIGNATURE_DIRECTION",
 		"WSDL20_RPC_SIGNATURE_DUPLICATE",
 	} {
-		if !strings.Contains(err.Error(), code) {
+		if ordinaryDiagnosticCount(t, err, code) == 0 {
 			t.Errorf("validation error %q missing %s", err, code)
 		}
 	}
@@ -123,8 +122,8 @@ func TestValidateWSDL20RPCRequiresSignatureAndElementContent(t *testing.T) {
 		}},
 	}
 	_, err := wsdl.NewDocument20(description, wsdl.ValidationOptions{})
-	if err == nil || !strings.Contains(err.Error(), "WSDL20_RPC_SIGNATURE_REQUIRED") ||
-		!strings.Contains(err.Error(), "WSDL20_RPC_MESSAGE_CONTENT") {
+	if err == nil || ordinaryDiagnosticCount(t, err, "WSDL20_RPC_SIGNATURE_REQUIRED") == 0 ||
+		ordinaryDiagnosticCount(t, err, "WSDL20_RPC_MESSAGE_CONTENT") == 0 {
 		t.Fatalf("NewDocument20() error = %v", err)
 	}
 }
@@ -149,7 +148,7 @@ func TestValidateWSDL20RPCRejectsEmptySignatureName(t *testing.T) {
 			}},
 		}},
 	}, wsdl.ValidationOptions{})
-	if err == nil || !strings.Contains(err.Error(), "WSDL20_RPC_SIGNATURE_NAME") {
+	if err == nil || ordinaryDiagnosticCount(t, err, "WSDL20_RPC_SIGNATURE_NAME") == 0 {
 		t.Fatalf("NewDocument20() error = %v", err)
 	}
 }
