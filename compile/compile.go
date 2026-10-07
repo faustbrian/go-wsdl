@@ -442,6 +442,21 @@ type inlineSchemaSource struct {
 	content   []byte
 }
 
+// compilationWalk belongs to one compiler traversal, never the reusable Compiler.
+// It records cancellation observed between owned operations; collaborators are
+// allowed to complete and are not preempted.
+type compilationWalk struct {
+	ctx context.Context
+	err error
+}
+
+func (w *compilationWalk) check() bool {
+	if w.err == nil {
+		w.err = w.ctx.Err()
+	}
+	return w.err == nil
+}
+
 type compileState struct {
 	compiler   *Compiler
 	resources  map[string]*resourceDocument
@@ -490,16 +505,31 @@ type reference struct {
 	include   bool
 }
 
-func (s *compileState) resolveDocument(ctx context.Context, identity string, depth int) error {
-	if err := ctx.Err(); err != nil {
-		return err
+func (s *compileState) resolveDocument(ctx context.Context, identity string, depth int) (compilationErr error) {
+	walk := &compilationWalk{ctx: ctx}
+	defer func() {
+		if compilationErr == nil {
+			walk.check()
+		}
+		if walk.err != nil {
+			compilationErr = walk.err
+		}
+	}()
+
+	if !walk.check() {
+		return walk.err
 	}
+
 	if depth > s.compiler.limits.MaxDepth {
 		return fmt.Errorf("%w: graph depth exceeds %d", ErrLimitExceeded, s.compiler.limits.MaxDepth)
 	}
 	resource := s.resources[identity]
-	references := documentReferences(resource.document)
+	references := documentReferences(walk, resource.document)
 	for _, reference := range references {
+		if !walk.check() {
+			return walk.err
+		}
+
 		s.references++
 		if s.references > s.compiler.limits.MaxReferences {
 			return fmt.Errorf("%w: references exceed %d", ErrLimitExceeded, s.compiler.limits.MaxReferences)
@@ -523,6 +553,9 @@ func (s *compileState) resolveDocument(ctx context.Context, identity string, dep
 			if err != nil {
 				return err
 			}
+			if !walk.check() {
+				return walk.err
+			}
 			if resolved.URI != reference.uri {
 				return fmt.Errorf(
 					"%w: requested %q, received %q",
@@ -544,6 +577,9 @@ func (s *compileState) resolveDocument(ctx context.Context, identity string, dep
 			if err != nil {
 				return err
 			}
+			if !walk.check() {
+				return walk.err
+			}
 			if err := validateReference(reference, document, resource.document); err != nil {
 				return err
 			}
@@ -553,14 +589,25 @@ func (s *compileState) resolveDocument(ctx context.Context, identity string, dep
 			}
 		}
 	}
+	if !walk.check() {
+		return walk.err
+	}
 	sort.Strings(resource.dependencies)
 	return nil
 }
 
-func documentReferences(document *wsdl.Document) []reference {
+func documentReferences(walk *compilationWalk, document *wsdl.Document) []reference {
+	if !walk.check() {
+		return nil
+	}
+
 	if definitions, ok := document.Definitions11(); ok {
 		result := make([]reference, 0, len(definitions.Imports))
 		for _, importValue := range definitions.Imports {
+			if !walk.check() {
+				return nil
+			}
+
 			result = append(result, reference{
 				uri: importValue.URI, namespace: importValue.Namespace,
 				kind: resolve.KindImport, version: wsdl.Version11,
@@ -571,12 +618,20 @@ func documentReferences(document *wsdl.Document) []reference {
 	description, _ := document.Description20()
 	result := make([]reference, 0, len(description.Imports)+len(description.Includes))
 	for _, importValue := range description.Imports {
+		if !walk.check() {
+			return nil
+		}
+
 		result = append(result, reference{
 			uri: importValue.URI, namespace: importValue.Namespace,
 			kind: resolve.KindImport, version: wsdl.Version20,
 		})
 	}
 	for _, include := range description.Includes {
+		if !walk.check() {
+			return nil
+		}
+
 		result = append(result, reference{
 			uri: include.URI, namespace: description.TargetNamespace,
 			kind: resolve.KindInclude, version: wsdl.Version20, include: true,
@@ -619,17 +674,38 @@ func validateIdentity(identity string) error {
 	return nil
 }
 
-func (s *compileState) buildSet(ctx context.Context) (*Set, error) {
+func (s *compileState) buildSet(ctx context.Context) (compiled *Set, compilationErr error) {
+	walk := &compilationWalk{ctx: ctx}
+	defer func() {
+		if compilationErr == nil {
+			walk.check()
+		}
+		if walk.err != nil {
+			compiled, compilationErr = nil, walk.err
+		}
+	}()
+
+	if !walk.check() {
+		return nil, walk.err
+	}
+
 	set := &Set{}
 	interfaceNames := make(map[wsdl.QName]struct{})
 	bindingNames := make(map[wsdl.QName]struct{})
 	serviceNames := make(map[wsdl.QName]struct{})
 	identities := make([]string, 0, len(s.resources))
 	for identity := range s.resources {
+		if !walk.check() {
+			return nil, walk.err
+		}
+
 		identities = append(identities, identity)
 	}
+	if !walk.check() {
+		return nil, walk.err
+	}
 	sort.Strings(identities)
-	messages11 := compileMessages11(s.resources)
+	messages11 := compileMessages11(walk, s.resources)
 	components := 0
 	addComponents := func(count int) error {
 		if count > s.compiler.limits.MaxComponents-components {
@@ -643,6 +719,10 @@ func (s *compileState) buildSet(ctx context.Context) (*Set, error) {
 		return nil
 	}
 	for _, identity := range identities {
+		if !walk.check() {
+			return nil, walk.err
+		}
+
 		resource := s.resources[identity]
 		set.documents = append(set.documents, Document{
 			URI: identity, Namespace: namespace(resource.document),
@@ -651,18 +731,33 @@ func (s *compileState) buildSet(ctx context.Context) (*Set, error) {
 		})
 		if definitions, ok := resource.document.Definitions11(); ok {
 			for _, message := range definitions.Messages {
+				if !walk.check() {
+					return nil, walk.err
+				}
+
 				if err := addComponents(1 + len(message.Parts)); err != nil {
 					return nil, err
 				}
 			}
 			for _, portType := range definitions.PortTypes {
+				if !walk.check() {
+					return nil, walk.err
+				}
+
 				if err := addComponents(1 + len(portType.Operations)); err != nil {
 					return nil, err
 				}
 				name := wsdl.QName{Namespace: definitions.TargetNamespace, Local: portType.Name}
 				operations := make([]Operation, 0, len(portType.Operations))
 				for _, operation := range portType.Operations {
-					operations = append(operations, compileOperation11(operation, messages11))
+					if !walk.check() {
+						return nil, walk.err
+					}
+
+					operations = append(operations, compileOperation11(walk, operation, messages11))
+				}
+				if !walk.check() {
+					return nil, walk.err
 				}
 				sortOperations(operations)
 				set.interfaces = append(set.interfaces, Interface{Name: name, Operations: operations})
@@ -671,18 +766,32 @@ func (s *compileState) buildSet(ctx context.Context) (*Set, error) {
 				}
 			}
 			for _, binding := range definitions.Bindings {
+				if !walk.check() {
+					return nil, walk.err
+				}
+
 				if err := addComponents(1 + len(binding.Operations)); err != nil {
 					return nil, err
 				}
 				operations := make([]string, 0, len(binding.Operations))
 				references := make([]OperationReference, 0, len(binding.Operations))
 				for _, operation := range binding.Operations {
+					if !walk.check() {
+						return nil, walk.err
+					}
+
 					operations = append(operations, operation.Name)
-					references = append(references, compileBindingOperationReference11(
+					references = append(references, compileBindingOperationReference11(walk,
 						operation, binding.Type, s.resources,
 					))
 				}
+				if !walk.check() {
+					return nil, walk.err
+				}
 				sort.Strings(operations)
+				if !walk.check() {
+					return nil, walk.err
+				}
 				sortOperationReferences(references)
 				name := wsdl.QName{Namespace: definitions.TargetNamespace, Local: binding.Name}
 				set.bindings = append(set.bindings, Binding{
@@ -694,11 +803,19 @@ func (s *compileState) buildSet(ctx context.Context) (*Set, error) {
 				}
 			}
 			for _, service := range definitions.Services {
+				if !walk.check() {
+					return nil, walk.err
+				}
+
 				if err := addComponents(1 + len(service.Ports)); err != nil {
 					return nil, err
 				}
 				endpoints := make([]Endpoint, 0, len(service.Ports))
 				for _, port := range service.Ports {
+					if !walk.check() {
+						return nil, walk.err
+					}
+
 					address := ""
 					if port.SOAPAddress != nil {
 						address = port.SOAPAddress.Location
@@ -708,6 +825,9 @@ func (s *compileState) buildSet(ctx context.Context) (*Set, error) {
 					endpoints = append(endpoints, Endpoint{
 						Name: port.Name, Binding: port.Binding, Address: address,
 					})
+				}
+				if !walk.check() {
+					return nil, walk.err
 				}
 				sortEndpoints(endpoints)
 				name := wsdl.QName{Namespace: definitions.TargetNamespace, Local: service.Name}
@@ -719,22 +839,40 @@ func (s *compileState) buildSet(ctx context.Context) (*Set, error) {
 		} else {
 			description, _ := resource.document.Description20()
 			for _, interfaceValue := range description.Interfaces {
-				if err := addComponents(countInterface20Components(interfaceValue)); err != nil {
+				if !walk.check() {
+					return nil, walk.err
+				}
+
+				if err := addComponents(countInterface20Components(walk, interfaceValue)); err != nil {
 					return nil, err
 				}
 				operations := make([]Operation, 0, len(interfaceValue.Operations))
-				faultElements := interfaceFaults20(description.TargetNamespace, interfaceValue.Faults)
+				faultElements := interfaceFaults20(walk, description.TargetNamespace, interfaceValue.Faults)
 				for _, operation := range interfaceValue.Operations {
-					operations = append(operations, compileOperation20(
+					if !walk.check() {
+						return nil, walk.err
+					}
+
+					operations = append(operations, compileOperation20(walk,
 						operation, interfaceValue.StyleDefault, faultElements,
 					))
+				}
+				if !walk.check() {
+					return nil, walk.err
 				}
 				sortOperations(operations)
 				faults := make([]wsdl.QName, 0, len(interfaceValue.Faults))
 				for _, fault := range interfaceValue.Faults {
+					if !walk.check() {
+						return nil, walk.err
+					}
+
 					faults = append(faults, wsdl.QName{
 						Namespace: description.TargetNamespace, Local: fault.Name,
 					})
+				}
+				if !walk.check() {
+					return nil, walk.err
 				}
 				sort.Slice(faults, func(left, right int) bool {
 					return lessQName(faults[left], faults[right])
@@ -749,16 +887,30 @@ func (s *compileState) buildSet(ctx context.Context) (*Set, error) {
 				}
 			}
 			for _, binding := range description.Bindings {
-				if err := addComponents(countBinding20Components(binding)); err != nil {
+				if !walk.check() {
+					return nil, walk.err
+				}
+
+				if err := addComponents(countBinding20Components(walk, binding)); err != nil {
 					return nil, err
 				}
 				operations := make([]string, 0, len(binding.Operations))
 				references := make([]OperationReference, 0, len(binding.Operations))
 				for _, operation := range binding.Operations {
+					if !walk.check() {
+						return nil, walk.err
+					}
+
 					operations = append(operations, operation.Ref.Local)
 					references = append(references, OperationReference{Name: operation.Ref.Local})
 				}
+				if !walk.check() {
+					return nil, walk.err
+				}
 				sort.Strings(operations)
+				if !walk.check() {
+					return nil, walk.err
+				}
 				sortOperationReferences(references)
 				name := wsdl.QName{Namespace: description.TargetNamespace, Local: binding.Name}
 				set.bindings = append(set.bindings, Binding{
@@ -771,15 +923,26 @@ func (s *compileState) buildSet(ctx context.Context) (*Set, error) {
 				}
 			}
 			for _, service := range description.Services {
+				if !walk.check() {
+					return nil, walk.err
+				}
+
 				if err := addComponents(1 + len(service.Endpoints)); err != nil {
 					return nil, err
 				}
 				endpoints := make([]Endpoint, 0, len(service.Endpoints))
 				for _, endpoint := range service.Endpoints {
+					if !walk.check() {
+						return nil, walk.err
+					}
+
 					endpoints = append(endpoints, Endpoint{
 						Name: endpoint.Name, Binding: endpoint.Binding,
 						Address: endpoint.Address,
 					})
+				}
+				if !walk.check() {
+					return nil, walk.err
 				}
 				sortEndpoints(endpoints)
 				name := wsdl.QName{Namespace: description.TargetNamespace, Local: service.Name}
@@ -792,20 +955,33 @@ func (s *compileState) buildSet(ctx context.Context) (*Set, error) {
 			}
 		}
 	}
+	if !walk.check() {
+		return nil, walk.err
+	}
 	sortInterfaces(set.interfaces)
+	if !walk.check() {
+		return nil, walk.err
+	}
 	sortBindings(set.bindings)
+	if !walk.check() {
+		return nil, walk.err
+	}
 	sortServices(set.services)
-	inherited, err := expandInterfaceInheritance(set.interfaces)
+	inherited, err := expandInterfaceInheritance(walk, set.interfaces)
 	if err != nil {
 		return nil, err
 	}
 	if err := addComponents(inherited); err != nil {
 		return nil, err
 	}
-	if err := validateGraph(set, interfaceNames, bindingNames); err != nil {
+	if err := validateGraph(walk, set, interfaceNames, bindingNames); err != nil {
 		return nil, err
 	}
 	for _, identity := range identities {
+		if !walk.check() {
+			return nil, walk.err
+		}
+
 		if err := wsdl.Validate(s.resources[identity].document, s.compiler.validation).Err(); err != nil {
 			return nil, fmt.Errorf("wsdl compile: validate %s: %w", identity, err)
 		}
@@ -815,27 +991,43 @@ func (s *compileState) buildSet(ctx context.Context) (*Set, error) {
 		return nil, err
 	}
 	set.schemas = schemas
-	if err := validateSchemaReferences20(s.resources, schemas); err != nil {
+	if err := validateSchemaReferences20(walk, s.resources, schemas); err != nil {
 		return nil, err
 	}
-	if err := validateRPCSchemas20(s.resources, schemas); err != nil {
+	if err := validateRPCSchemas20(walk, s.resources, schemas); err != nil {
 		return nil, err
 	}
-	if err := validateOperationStyleSchemas20(s.resources, schemas); err != nil {
+	if err := validateOperationStyleSchemas20(walk, s.resources, schemas); err != nil {
 		return nil, err
 	}
 	return set, nil
 }
 
-func compileMessages11(resources map[string]*resourceDocument) map[wsdl.QName]Message {
+func compileMessages11(walk *compilationWalk, resources map[string]*resourceDocument) map[wsdl.QName]Message {
+	if !walk.check() {
+		return nil
+	}
+
 	result := make(map[wsdl.QName]Message)
 	for _, resource := range resources {
+		if !walk.check() {
+			return nil
+		}
+
 		definitions, ok := resource.document.Definitions11()
 		if ok {
 			for _, message := range definitions.Messages {
+				if !walk.check() {
+					return nil
+				}
+
 				name := wsdl.QName{Namespace: definitions.TargetNamespace, Local: message.Name}
 				parts := make([]Part, 0, len(message.Parts))
 				for _, part := range message.Parts {
+					if !walk.check() {
+						return nil
+					}
+
 					parts = append(parts, Part{
 						Name: part.Name, Element: part.Element, Type: part.Type,
 					})
@@ -847,7 +1039,11 @@ func compileMessages11(resources map[string]*resourceDocument) map[wsdl.QName]Me
 	return result
 }
 
-func compileOperation11(operation wsdl.Operation11, messages map[wsdl.QName]Message) Operation {
+func compileOperation11(walk *compilationWalk, operation wsdl.Operation11, messages map[wsdl.QName]Message) Operation {
+	if !walk.check() {
+		return Operation{}
+	}
+
 	result := Operation{Name: operation.Name, Style: string(operation.Style)}
 	result.Input = compileMessage11(operation.Input, messages)
 	result.Output = compileMessage11(operation.Output, messages)
@@ -865,6 +1061,10 @@ func compileOperation11(operation wsdl.Operation11, messages map[wsdl.QName]Mess
 		result.Outputs = []Message{*cloneMessage(result.Output)}
 	}
 	for _, fault := range operation.Faults {
+		if !walk.check() {
+			return Operation{}
+		}
+
 		direction := "out"
 		if operation.Style == wsdl.OperationStyleSolicitResponse {
 			direction = "in"
@@ -877,17 +1077,25 @@ func compileOperation11(operation wsdl.Operation11, messages map[wsdl.QName]Mess
 	return result
 }
 
-func compileBindingOperationReference11(
+func compileBindingOperationReference11(walk *compilationWalk,
 	bound wsdl.BindingOperation11,
 	portTypeName wsdl.QName,
 	resources map[string]*resourceDocument,
 ) OperationReference {
+	if !walk.check() {
+		return OperationReference{}
+	}
+
 	candidates := make([]OperationReference, 0, 1)
 	for _, resource := range resources {
+		if !walk.check() {
+			return OperationReference{}
+		}
+
 		definitions, ok := resource.document.Definitions11()
 		if ok {
 			if definitions.TargetNamespace == portTypeName.Namespace {
-				candidates = append(candidates, bindingOperationCandidates11(bound, portTypeName.Local, definitions.PortTypes)...)
+				candidates = append(candidates, bindingOperationCandidates11(walk, bound, portTypeName.Local, definitions.PortTypes)...)
 			}
 		}
 	}
@@ -904,15 +1112,27 @@ func compileBindingOperationReference11(
 	return result
 }
 
-func bindingOperationCandidates11(
+func bindingOperationCandidates11(walk *compilationWalk,
 	bound wsdl.BindingOperation11,
 	portTypeName string,
 	portTypes []wsdl.PortType11,
 ) []OperationReference {
+	if !walk.check() {
+		return nil
+	}
+
 	var candidates []OperationReference
 	for _, portType := range portTypes {
+		if !walk.check() {
+			return nil
+		}
+
 		if portType.Name == portTypeName {
 			for _, operation := range portType.Operations {
+				if !walk.check() {
+					return nil
+				}
+
 				input, output := operationMessageNames11(operation)
 				if bindingOperationMatches11(bound, operation.Name, input, output) {
 					candidates = append(candidates, OperationReference{
@@ -989,22 +1209,34 @@ func compileMessage11(reference *wsdl.OperationMessage11, messages map[wsdl.QNam
 	return &result
 }
 
-func interfaceFaults20(
+func interfaceFaults20(walk *compilationWalk,
 	targetNamespace string,
 	values []wsdl.InterfaceFault20,
 ) map[wsdl.QName]wsdl.InterfaceFault20 {
+	if !walk.check() {
+		return nil
+	}
+
 	result := make(map[wsdl.QName]wsdl.InterfaceFault20, len(values))
 	for _, value := range values {
+		if !walk.check() {
+			return nil
+		}
+
 		result[wsdl.QName{Namespace: targetNamespace, Local: value.Name}] = value
 	}
 	return result
 }
 
-func compileOperation20(
+func compileOperation20(walk *compilationWalk,
 	operation wsdl.InterfaceOperation20,
 	defaultStyles []string,
 	faults map[wsdl.QName]wsdl.InterfaceFault20,
 ) Operation {
+	if !walk.check() {
+		return Operation{}
+	}
+
 	styles := operation.Style
 	if len(styles) == 0 {
 		styles = defaultStyles
@@ -1016,9 +1248,17 @@ func compileOperation20(
 		RPCSignatureSet: operation.RPCSignatureSet,
 	}
 	for index, message := range interfaceMessages20(operation.Inputs, operation.Input) {
+		if !walk.check() {
+			return Operation{}
+		}
+
 		result.Inputs = append(result.Inputs, *compileMessage20(&message, defaultMessageLabel20("In", index)))
 	}
 	for index, message := range interfaceMessages20(operation.Outputs, operation.Output) {
+		if !walk.check() {
+			return Operation{}
+		}
+
 		result.Outputs = append(result.Outputs, *compileMessage20(&message, defaultMessageLabel20("Out", index)))
 	}
 	if len(result.Inputs) > 0 {
@@ -1028,9 +1268,17 @@ func compileOperation20(
 		result.Output = cloneMessage(&result.Outputs[0])
 	}
 	for _, reference := range operation.InFaults {
+		if !walk.check() {
+			return Operation{}
+		}
+
 		result.Faults = append(result.Faults, compileFault20(reference, "in", faults))
 	}
 	for _, reference := range operation.OutFaults {
+		if !walk.check() {
+			return Operation{}
+		}
+
 		result.Faults = append(result.Faults, compileFault20(reference, "out", faults))
 	}
 	return result
@@ -1085,10 +1333,28 @@ func compileFault20(
 func (s *compileState) compileSchemas(
 	ctx context.Context,
 	identities []string,
-) (*xsdcompile.Set, error) {
+) (compiled *xsdcompile.Set, compilationErr error) {
+	walk := &compilationWalk{ctx: ctx}
+	defer func() {
+		if compilationErr == nil {
+			walk.check()
+		}
+		if walk.err != nil {
+			compiled, compilationErr = nil, walk.err
+		}
+	}()
+
+	if !walk.check() {
+		return nil, walk.err
+	}
+
 	sources := make([]inlineSchemaSource, 0)
 	imports := make([]xsd.SchemaReference, 0)
 	for _, identity := range identities {
+		if !walk.check() {
+			return nil, walk.err
+		}
+
 		document := s.resources[identity].document
 		var schemas []*xsd.Document
 		if definitions, ok := document.Definitions11(); ok && definitions.Types != nil {
@@ -1098,9 +1364,16 @@ func (s *compileState) compileSchemas(
 			imports = append(imports, description.Types.Imports...)
 		}
 		for index, schema := range schemas {
+			if !walk.check() {
+				return nil, walk.err
+			}
+
 			content, err := xsd.Marshal(schema)
 			if err != nil {
 				return nil, fmt.Errorf("wsdl compile: marshal inline schema: %w", err)
+			}
+			if !walk.check() {
+				return nil, walk.err
 			}
 			uri, err := inlineSchemaURI(identity, index)
 			if err != nil {
@@ -1116,11 +1389,18 @@ func (s *compileState) compileSchemas(
 	}
 	resources := make(map[string][]byte, len(sources))
 	for _, source := range sources {
+		if !walk.check() {
+			return nil, walk.err
+		}
+
 		resources[source.uri] = source.content
 	}
 	memory, err := xsdresolve.NewMemory(resources)
 	if err != nil {
 		return nil, fmt.Errorf("wsdl compile: inline schema resolver: %w", err)
+	}
+	if !walk.check() {
+		return nil, walk.err
 	}
 	compiler, err := xsdcompile.New(xsdcompile.Options{
 		Resolver: xsdresolve.Chain(memory, s.compiler.schemaResolver),
@@ -1129,7 +1409,7 @@ func (s *compileState) compileSchemas(
 	if err != nil {
 		return nil, fmt.Errorf("wsdl compile: create schema compiler: %w", err)
 	}
-	wrapper, err := schemaWrapper(sources, imports)
+	wrapper, err := schemaWrapper(walk, sources, imports)
 	if err != nil {
 		return nil, err
 	}
@@ -1153,13 +1433,21 @@ func inlineSchemaURI(owner string, index int) (string, error) {
 	return identity.String(), nil
 }
 
-func schemaWrapper(
+func schemaWrapper(walk *compilationWalk,
 	sources []inlineSchemaSource,
 	imports []xsd.SchemaReference,
 ) ([]byte, error) {
+	if !walk.check() {
+		return nil, walk.err
+	}
+
 	var output bytes.Buffer
 	output.WriteString(`<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">`)
 	for _, source := range sources {
+		if !walk.check() {
+			return nil, walk.err
+		}
+
 		if source.namespace == "" {
 			output.WriteString(`<xs:include schemaLocation="`)
 		} else {
@@ -1175,6 +1463,10 @@ func schemaWrapper(
 		output.WriteString(`"/>`)
 	}
 	for _, importValue := range imports {
+		if !walk.check() {
+			return nil, walk.err
+		}
+
 		output.WriteString(`<xs:import`)
 		if importValue.Namespace != "" {
 			output.WriteString(` namespace="`)
@@ -1196,32 +1488,60 @@ func schemaWrapper(
 	return output.Bytes(), nil
 }
 
-func validateSchemaReferences20(
+func validateSchemaReferences20(walk *compilationWalk,
 	resources map[string]*resourceDocument,
 	schemas *xsdcompile.Set,
 ) error {
+	if !walk.check() {
+		return walk.err
+	}
+
 	elements := make(map[wsdl.QName]struct{})
 	types := make(map[wsdl.QName]struct{})
 	if schemas != nil {
 		for _, name := range schemas.ElementNames() {
+			if !walk.check() {
+				return walk.err
+			}
+
 			elements[wsdl.QName{Namespace: name.Namespace, Local: name.Local}] = struct{}{}
 		}
 		for _, name := range schemas.SimpleTypeNames() {
+			if !walk.check() {
+				return walk.err
+			}
+
 			types[wsdl.QName{Namespace: name.Namespace, Local: name.Local}] = struct{}{}
 		}
 		for _, name := range schemas.ComplexTypeNames() {
+			if !walk.check() {
+				return walk.err
+			}
+
 			types[wsdl.QName{Namespace: name.Namespace, Local: name.Local}] = struct{}{}
 		}
 	}
 	for _, resource := range resources {
+		if !walk.check() {
+			return walk.err
+		}
+
 		if definitions, ok := resource.document.Definitions11(); ok {
-			if err := validateSchemaReferences11(definitions.Messages, elements, types); err != nil {
+			if err := validateSchemaReferences11(walk, definitions.Messages, elements, types); err != nil {
 				return err
 			}
 		} else {
 			description, _ := resource.document.Description20()
 			for _, interfaceValue := range description.Interfaces {
+				if !walk.check() {
+					return walk.err
+				}
+
 				for _, fault := range interfaceValue.Faults {
+					if !walk.check() {
+						return walk.err
+					}
+
 					if fault.MessageContentModel == wsdl.MessageContentElement {
 						if _, exists := elements[fault.Element]; !exists {
 							return unresolvedSchemaComponent("element", fault.Element)
@@ -1229,11 +1549,19 @@ func validateSchemaReferences20(
 					}
 				}
 				for _, operation := range interfaceValue.Operations {
+					if !walk.check() {
+						return walk.err
+					}
+
 					messages := append(
 						interfaceMessages20(operation.Inputs, operation.Input),
 						interfaceMessages20(operation.Outputs, operation.Output)...,
 					)
 					for _, message := range messages {
+						if !walk.check() {
+							return walk.err
+						}
+
 						if message.MessageContentModel == wsdl.MessageContentElement {
 							if _, exists := elements[message.Element]; !exists {
 								return unresolvedSchemaComponent("element", message.Element)
@@ -1243,28 +1571,52 @@ func validateSchemaReferences20(
 				}
 			}
 			for _, binding := range description.Bindings {
+				if !walk.check() {
+					return walk.err
+				}
+
 				for _, fault := range binding.Faults {
+					if !walk.check() {
+						return walk.err
+					}
+
 					if fault.SOAP != nil {
 						for _, header := range fault.SOAP.Headers {
+							if !walk.check() {
+								return walk.err
+							}
+
 							if _, exists := elements[header.Element]; !exists {
 								return unresolvedSchemaComponent("element", header.Element)
 							}
 						}
 					}
 					if fault.HTTP != nil {
-						if err := validateHTTPHeaderTypes20(fault.HTTP.Headers, types); err != nil {
+						if err := validateHTTPHeaderTypes20(walk, fault.HTTP.Headers, types); err != nil {
 							return err
 						}
 					}
 				}
 				for _, operation := range binding.Operations {
+					if !walk.check() {
+						return walk.err
+					}
+
 					for _, message := range operation.Inputs {
-						if err := validateBindingMessageSchema20(message, elements, types); err != nil {
+						if !walk.check() {
+							return walk.err
+						}
+
+						if err := validateBindingMessageSchema20(walk, message, elements, types); err != nil {
 							return err
 						}
 					}
 					for _, message := range operation.Outputs {
-						if err := validateBindingMessageSchema20(message, elements, types); err != nil {
+						if !walk.check() {
+							return walk.err
+						}
+
+						if err := validateBindingMessageSchema20(walk, message, elements, types); err != nil {
 							return err
 						}
 					}
@@ -1275,13 +1627,25 @@ func validateSchemaReferences20(
 	return nil
 }
 
-func validateSchemaReferences11(
+func validateSchemaReferences11(walk *compilationWalk,
 	messages []wsdl.Message11,
 	elements map[wsdl.QName]struct{},
 	types map[wsdl.QName]struct{},
 ) error {
+	if !walk.check() {
+		return walk.err
+	}
+
 	for _, message := range messages {
+		if !walk.check() {
+			return walk.err
+		}
+
 		for _, part := range message.Parts {
+			if !walk.check() {
+				return walk.err
+			}
+
 			if part.Element.Local != "" {
 				if _, exists := elements[part.Element]; !exists {
 					return unresolvedSchemaComponent("element", part.Element)
@@ -1302,27 +1666,43 @@ type rpcMessageShape20 struct {
 	wildcard bool
 }
 
-func validateRPCSchemas20(
+func validateRPCSchemas20(walk *compilationWalk,
 	resources map[string]*resourceDocument,
 	schemas *xsdcompile.Set,
 ) error {
+	if !walk.check() {
+		return walk.err
+	}
+
 	for _, resource := range resources {
+		if !walk.check() {
+			return walk.err
+		}
+
 		description, ok := resource.document.Description20()
 		if ok {
 			for _, interfaceValue := range description.Interfaces {
+				if !walk.check() {
+					return walk.err
+				}
+
 				for _, operation := range interfaceValue.Operations {
-					if operationUsesRPCStyle20(interfaceValue, operation) {
+					if !walk.check() {
+						return walk.err
+					}
+
+					if operationUsesRPCStyle20(walk, interfaceValue, operation) {
 						inputs := interfaceMessages20(operation.Inputs, operation.Input)
 						outputs := interfaceMessages20(operation.Outputs, operation.Output)
-						input, err := rpcMessageShape(operation.Name, "input", inputs, schemas)
+						input, err := rpcMessageShape(walk, operation.Name, "input", inputs, schemas)
 						if err != nil {
 							return err
 						}
-						output, err := rpcMessageShape(operation.Name, "output", outputs, schemas)
+						output, err := rpcMessageShape(walk, operation.Name, "output", outputs, schemas)
 						if err != nil {
 							return err
 						}
-						if err := validateRPCSignature20(operation, input, output); err != nil {
+						if err := validateRPCSignature20(walk, operation, input, output); err != nil {
 							return err
 						}
 					}
@@ -1333,24 +1713,44 @@ func validateRPCSchemas20(
 	return nil
 }
 
-func validateOperationStyleSchemas20(
+func validateOperationStyleSchemas20(walk *compilationWalk,
 	resources map[string]*resourceDocument,
 	schemas *xsdcompile.Set,
 ) error {
+	if !walk.check() {
+		return walk.err
+	}
+
 	for _, resource := range resources {
+		if !walk.check() {
+			return walk.err
+		}
+
 		description, ok := resource.document.Description20()
 		if ok {
 			for _, interfaceValue := range description.Interfaces {
+				if !walk.check() {
+					return walk.err
+				}
+
 				for _, operation := range interfaceValue.Operations {
+					if !walk.check() {
+						return walk.err
+					}
+
 					styles := operation.Style
 					if len(styles) == 0 {
 						styles = interfaceValue.StyleDefault
 					}
 					for _, style := range styles {
+						if !walk.check() {
+							return walk.err
+						}
+
 						if style == wsdl.StyleIRI || style == wsdl.StyleMultipart {
 							message := initialOperationMessage20(operation)
 							if message != nil {
-								if err := validateOperationStyleSchema20(style, operation.Name, *message, schemas); err != nil {
+								if err := validateOperationStyleSchema20(walk, style, operation.Name, *message, schemas); err != nil {
 									return err
 								}
 							}
@@ -1384,12 +1784,16 @@ func initialOperationMessage20(
 	return nil
 }
 
-func validateOperationStyleSchema20(
+func validateOperationStyleSchema20(walk *compilationWalk,
 	style string,
 	operation string,
 	message wsdl.InterfaceMessageReference20,
 	schemas *xsdcompile.Set,
 ) error {
+	if !walk.check() {
+		return walk.err
+	}
+
 	invalid := invalidIRIStyle
 	if style == wsdl.StyleMultipart {
 		invalid = invalidMultipartStyle
@@ -1411,6 +1815,10 @@ func validateOperationStyleSchema20(
 	}
 	seen := make(map[string]struct{})
 	for _, particle := range typeDefinition.Content.Particles {
+		if !walk.check() {
+			return walk.err
+		}
+
 		if particle.Element == nil || particle.Element.Ref.Local != "" || particle.Element.Name == "" {
 			return invalid(operation, "sequence must contain only local elements")
 		}
@@ -1428,7 +1836,7 @@ func validateOperationStyleSchema20(
 			}
 			continue
 		}
-		if !iriSimpleElementAllowed(child, schemas) {
+		if !iriSimpleElementAllowed(walk, child, schemas) {
 			return invalid(operation, "child element "+child.Name+" must use an allowed simple type")
 		}
 	}
@@ -1453,12 +1861,16 @@ func elementComplexType(element xsd.Element, schemas *xsdcompile.Set) (xsd.Compl
 	return schemas.ComplexType(element.Type)
 }
 
-func iriSimpleElementAllowed(element xsd.Element, schemas *xsdcompile.Set) bool {
+func iriSimpleElementAllowed(walk *compilationWalk, element xsd.Element, schemas *xsdcompile.Set) bool {
+	if !walk.check() {
+		return false
+	}
+
 	if element.InlineComplexType != nil {
 		return false
 	}
 	if element.InlineSimpleType != nil {
-		return !iriSimpleTypeForbidden(*element.InlineSimpleType, schemas, make(map[xsd.QName]struct{}))
+		return !iriSimpleTypeForbidden(walk, *element.InlineSimpleType, schemas, make(map[xsd.QName]struct{}))
 	}
 	if element.Type.Local == "" {
 		return false
@@ -1470,15 +1882,19 @@ func iriSimpleElementAllowed(element xsd.Element, schemas *xsdcompile.Set) bool 
 	if !exists {
 		return false
 	}
-	return !iriSimpleTypeForbidden(definition, schemas, map[xsd.QName]struct{}{element.Type: {}})
+	return !iriSimpleTypeForbidden(walk, definition, schemas, map[xsd.QName]struct{}{element.Type: {}})
 }
 
-func iriSimpleTypeForbidden(
+func iriSimpleTypeForbidden(walk *compilationWalk,
 	definition xsd.SimpleType,
 	schemas *xsdcompile.Set,
 	seen map[xsd.QName]struct{},
 ) bool {
-	if definition.InlineBase != nil && iriSimpleTypeForbidden(*definition.InlineBase, schemas, seen) {
+	if !walk.check() {
+		return false
+	}
+
+	if definition.InlineBase != nil && iriSimpleTypeForbidden(walk, *definition.InlineBase, schemas, seen) {
 		return true
 	}
 	if definition.Base.Local == "" {
@@ -1495,7 +1911,7 @@ func iriSimpleTypeForbidden(
 	}
 	seen[definition.Base] = struct{}{}
 	base, exists := schemas.SimpleType(definition.Base)
-	return exists && iriSimpleTypeForbidden(base, schemas, seen)
+	return exists && iriSimpleTypeForbidden(walk, base, schemas, seen)
 }
 
 func forbiddenIRIPrimitive(name xsd.QName) bool {
@@ -1518,15 +1934,23 @@ func invalidMultipartStyle(operation string, message string) error {
 	return fmt.Errorf("%w: operation %q %s", ErrInvalidMultipartStyle, operation, message)
 }
 
-func operationUsesRPCStyle20(
+func operationUsesRPCStyle20(walk *compilationWalk,
 	interfaceValue wsdl.Interface20,
 	operation wsdl.InterfaceOperation20,
 ) bool {
+	if !walk.check() {
+		return false
+	}
+
 	styles := operation.Style
 	if len(styles) == 0 {
 		styles = interfaceValue.StyleDefault
 	}
 	for _, style := range styles {
+		if !walk.check() {
+			return false
+		}
+
 		if style == wsdl.StyleRPC {
 			return true
 		}
@@ -1534,12 +1958,16 @@ func operationUsesRPCStyle20(
 	return false
 }
 
-func rpcMessageShape(
+func rpcMessageShape(walk *compilationWalk,
 	operation string,
 	direction string,
 	messages []wsdl.InterfaceMessageReference20,
 	schemas *xsdcompile.Set,
 ) (rpcMessageShape20, error) {
+	if !walk.check() {
+		return rpcMessageShape20{}, walk.err
+	}
+
 	shape := rpcMessageShape20{elements: make(map[wsdl.QName]xsd.QName)}
 	if len(messages) == 0 {
 		return shape, nil
@@ -1562,6 +1990,10 @@ func rpcMessageShape(
 	}
 	particles := typeDefinition.Content.Particles
 	for index, particle := range particles {
+		if !walk.check() {
+			return rpcMessageShape20{}, walk.err
+		}
+
 		if particle.Element != nil {
 			if !isLocalRPCElement(*particle.Element) {
 				return shape, invalidRPC(operation, direction+" sequence must contain local elements")
@@ -1602,13 +2034,21 @@ func rpcComplexType(
 	return schemas.ComplexType(element.Type)
 }
 
-func validateRPCSignature20(
+func validateRPCSignature20(walk *compilationWalk,
 	operation wsdl.InterfaceOperation20,
 	input rpcMessageShape20,
 	output rpcMessageShape20,
 ) error {
+	if !walk.check() {
+		return walk.err
+	}
+
 	signature := make(map[wsdl.QName]wsdl.RPCDirection, len(operation.RPCSignature))
 	for _, parameter := range operation.RPCSignature {
+		if !walk.check() {
+			return walk.err
+		}
+
 		signature[parameter.Name] = parameter.Direction
 		_, in := input.elements[parameter.Name]
 		_, out := output.elements[parameter.Name]
@@ -1635,6 +2075,10 @@ func validateRPCSignature20(
 		}
 	}
 	for name, inputType := range input.elements {
+		if !walk.check() {
+			return walk.err
+		}
+
 		if _, exists := signature[name]; !exists {
 			return invalidRPC(operation.Name, "signature omits input element "+formatRPCQName(name))
 		}
@@ -1644,6 +2088,10 @@ func validateRPCSignature20(
 		}
 	}
 	for name := range output.elements {
+		if !walk.check() {
+			return walk.err
+		}
+
 		if _, exists := signature[name]; !exists {
 			return invalidRPC(operation.Name, "signature omits output element "+formatRPCQName(name))
 		}
@@ -1659,29 +2107,45 @@ func formatRPCQName(name wsdl.QName) string {
 	return "{" + name.Namespace + "}" + name.Local
 }
 
-func validateBindingMessageSchema20(
+func validateBindingMessageSchema20(walk *compilationWalk,
 	message wsdl.BindingMessageReference20,
 	elements map[wsdl.QName]struct{},
 	types map[wsdl.QName]struct{},
 ) error {
+	if !walk.check() {
+		return walk.err
+	}
+
 	if message.SOAP != nil {
 		for _, header := range message.SOAP.Headers {
+			if !walk.check() {
+				return walk.err
+			}
+
 			if _, exists := elements[header.Element]; !exists {
 				return unresolvedSchemaComponent("element", header.Element)
 			}
 		}
 	}
 	if message.HTTP != nil {
-		return validateHTTPHeaderTypes20(message.HTTP.Headers, types)
+		return validateHTTPHeaderTypes20(walk, message.HTTP.Headers, types)
 	}
 	return nil
 }
 
-func validateHTTPHeaderTypes20(
+func validateHTTPHeaderTypes20(walk *compilationWalk,
 	headers []wsdl.HTTPHeader20,
 	types map[wsdl.QName]struct{},
 ) error {
+	if !walk.check() {
+		return walk.err
+	}
+
 	for _, header := range headers {
+		if !walk.check() {
+			return walk.err
+		}
+
 		if header.Type.Namespace != wsdl.NamespaceXMLSchema {
 			if _, exists := types[header.Type]; !exists {
 				return unresolvedSchemaComponent("type", header.Type)
@@ -1701,9 +2165,17 @@ func unresolvedSchemaComponent(kind string, name wsdl.QName) error {
 	)
 }
 
-func countInterface20Components(value wsdl.Interface20) int {
+func countInterface20Components(walk *compilationWalk, value wsdl.Interface20) int {
+	if !walk.check() {
+		return 0
+	}
+
 	count := 1 + len(value.Faults)
 	for _, operation := range value.Operations {
+		if !walk.check() {
+			return 0
+		}
+
 		count++
 		count += len(interfaceMessages20(operation.Inputs, operation.Input))
 		count += len(interfaceMessages20(operation.Outputs, operation.Output))
@@ -1712,9 +2184,17 @@ func countInterface20Components(value wsdl.Interface20) int {
 	return count
 }
 
-func countBinding20Components(value wsdl.Binding20) int {
+func countBinding20Components(walk *compilationWalk, value wsdl.Binding20) int {
+	if !walk.check() {
+		return 0
+	}
+
 	count := 1 + len(value.Faults)
 	for _, operation := range value.Operations {
+		if !walk.check() {
+			return 0
+		}
+
 		count++
 		count += len(operation.Inputs) + len(operation.Outputs)
 		count += len(operation.InFaults) + len(operation.OutFaults)
@@ -1730,15 +2210,27 @@ func addName(names map[wsdl.QName]struct{}, kind string, name wsdl.QName) error 
 	return nil
 }
 
-func expandInterfaceInheritance(values []Interface) (int, error) {
+func expandInterfaceInheritance(walk *compilationWalk, values []Interface) (int, error) {
+	if !walk.check() {
+		return 0, walk.err
+	}
+
 	indexes := make(map[wsdl.QName]int, len(values))
 	for index, value := range values {
+		if !walk.check() {
+			return 0, walk.err
+		}
+
 		indexes[value.Name] = index
 	}
 	states := make([]uint8, len(values))
 	added := 0
 	var expand func(int) error
 	expand = func(index int) error {
+		if !walk.check() {
+			return walk.err
+		}
+
 		if states[index] == 2 {
 			return nil
 		}
@@ -1750,6 +2242,10 @@ func expandInterfaceInheritance(values []Interface) (int, error) {
 		}
 		states[index] = 1
 		for _, parentName := range values[index].Extends {
+			if !walk.check() {
+				return walk.err
+			}
+
 			parentIndex, exists := indexes[parentName]
 			if !exists {
 				return fmt.Errorf(
@@ -1761,7 +2257,11 @@ func expandInterfaceInheritance(values []Interface) (int, error) {
 				return err
 			}
 			for _, operation := range values[parentIndex].Operations {
-				existing := operationIndex(values[index].Operations, operation.Name)
+				if !walk.check() {
+					return walk.err
+				}
+
+				existing := operationIndex(walk, values[index].Operations, operation.Name)
 				if existing < 0 {
 					values[index].Operations = append(values[index].Operations, cloneOperation(operation))
 					added++
@@ -1774,13 +2274,23 @@ func expandInterfaceInheritance(values []Interface) (int, error) {
 				}
 			}
 			for _, fault := range values[parentIndex].Faults {
-				if qnameIndex(values[index].Faults, fault) < 0 {
+				if !walk.check() {
+					return walk.err
+				}
+
+				if qnameIndex(walk, values[index].Faults, fault) < 0 {
 					values[index].Faults = append(values[index].Faults, fault)
 					added++
 				}
 			}
 		}
+		if !walk.check() {
+			return walk.err
+		}
 		sortOperations(values[index].Operations)
+		if !walk.check() {
+			return walk.err
+		}
 		sort.Slice(values[index].Faults, func(left, right int) bool {
 			return lessQName(values[index].Faults[left], values[index].Faults[right])
 		})
@@ -1788,6 +2298,10 @@ func expandInterfaceInheritance(values []Interface) (int, error) {
 		return nil
 	}
 	for index := range values {
+		if !walk.check() {
+			return 0, walk.err
+		}
+
 		if err := expand(index); err != nil {
 			return 0, err
 		}
@@ -1795,8 +2309,16 @@ func expandInterfaceInheritance(values []Interface) (int, error) {
 	return added, nil
 }
 
-func operationIndex(values []Operation, name string) int {
+func operationIndex(walk *compilationWalk, values []Operation, name string) int {
+	if !walk.check() {
+		return -1
+	}
+
 	for index := range values {
+		if !walk.check() {
+			return -1
+		}
+
 		if values[index].Name == name {
 			return index
 		}
@@ -1804,8 +2326,16 @@ func operationIndex(values []Operation, name string) int {
 	return -1
 }
 
-func qnameIndex(values []wsdl.QName, name wsdl.QName) int {
+func qnameIndex(walk *compilationWalk, values []wsdl.QName, name wsdl.QName) int {
+	if !walk.check() {
+		return -1
+	}
+
 	for index := range values {
+		if !walk.check() {
+			return -1
+		}
+
 		if values[index] == name {
 			return index
 		}
@@ -1813,17 +2343,29 @@ func qnameIndex(values []wsdl.QName, name wsdl.QName) int {
 	return -1
 }
 
-func validateGraph(
+func validateGraph(walk *compilationWalk,
 	set *Set,
 	interfaces map[wsdl.QName]struct{},
 	bindings map[wsdl.QName]struct{},
 ) error {
+	if !walk.check() {
+		return walk.err
+	}
+
 	operations := make(map[wsdl.QName]map[OperationReference]struct{}, len(set.interfaces))
 	operationNames := make(map[wsdl.QName]map[string]struct{}, len(set.interfaces))
 	for _, interfaceValue := range set.interfaces {
+		if !walk.check() {
+			return walk.err
+		}
+
 		identities := make(map[OperationReference]struct{}, len(interfaceValue.Operations))
 		names := make(map[string]struct{}, len(interfaceValue.Operations))
 		for _, operation := range interfaceValue.Operations {
+			if !walk.check() {
+				return walk.err
+			}
+
 			identities[operationIdentity(operation)] = struct{}{}
 			names[operation.Name] = struct{}{}
 		}
@@ -1831,10 +2373,18 @@ func validateGraph(
 		operationNames[interfaceValue.Name] = names
 	}
 	for _, binding := range set.bindings {
+		if !walk.check() {
+			return walk.err
+		}
+
 		if _, exists := interfaces[binding.Interface]; !exists {
 			return fmt.Errorf("%w: binding interface {%s}%s", ErrUnresolvedComponent, binding.Interface.Namespace, binding.Interface.Local)
 		}
 		for _, operation := range binding.OperationReferences {
+			if !walk.check() {
+				return walk.err
+			}
+
 			_, exists := operations[binding.Interface][operation]
 			if operation.Input == "" {
 				if operation.Output == "" {
@@ -1855,12 +2405,20 @@ func validateGraph(
 		}
 	}
 	for _, service := range set.services {
+		if !walk.check() {
+			return walk.err
+		}
+
 		if service.Interface.Local != "" {
 			if _, exists := interfaces[service.Interface]; !exists {
 				return fmt.Errorf("%w: service interface {%s}%s", ErrUnresolvedComponent, service.Interface.Namespace, service.Interface.Local)
 			}
 		}
 		for _, endpoint := range service.Endpoints {
+			if !walk.check() {
+				return walk.err
+			}
+
 			if _, exists := bindings[endpoint.Binding]; !exists {
 				return fmt.Errorf("%w: endpoint binding {%s}%s", ErrUnresolvedComponent, endpoint.Binding.Namespace, endpoint.Binding.Local)
 			}

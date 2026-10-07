@@ -116,7 +116,7 @@
       "version": "1.0.0",
       "tag_prefix": "v",
       "owned_dependencies": [
-        "github.com/faustbrian/go-wire",
+        "github.com/faustbrian/go-wire/v3",
         "github.com/faustbrian/go-xsd"
       ],
       "reverse_owned_dependencies": [],

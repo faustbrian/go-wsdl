@@ -8,24 +8,49 @@ import (
 	xsd "github.com/faustbrian/go-xsd"
 )
 
-func decodeDefinitions11(root *xmlNode, state *parseState) (Definitions11, error) {
+func decodeDefinitions11(root *xmlNode, state *parseState) (converted Definitions11, conversionErr error) {
+	if err := root.useOwner(state); err != nil {
+		return Definitions11{}, err
+	}
+	if err := root.contextError(); err != nil {
+		return Definitions11{}, err
+	}
+	defer finishConversion(root, &converted, &conversionErr)
 	definitions := Definitions11{
 		Name:                root.attribute("name"),
 		TargetNamespace:     root.attribute("targetNamespace"),
 		Location:            root.location,
 		ExtensionAttributes: decodeExtensionAttributes(root, NamespaceWSDL11),
 	}
+	if err := root.contextError(); err != nil {
+		return Definitions11{}, err
+	}
 	messages := make(map[string]struct{})
+	if err := root.contextError(); err != nil {
+		return Definitions11{}, err
+	}
 	portTypes := make(map[string]struct{})
+	if err := root.contextError(); err != nil {
+		return Definitions11{}, err
+	}
 	bindings := make(map[string]struct{})
+	if err := root.contextError(); err != nil {
+		return Definitions11{}, err
+	}
 	services := make(map[string]struct{})
 	for _, child := range root.children {
+		if err := root.contextError(); err != nil {
+			return Definitions11{}, err
+		}
 		switch child.name {
 		case xml.Name{Space: NamespaceWSDL11, Local: "documentation"}:
 			definitions.Documentation = child.documentation()
 		case xml.Name{Space: NamespaceWSDL11, Local: "import"}:
 			importValue, err := decodeImport11(child)
 			if err != nil {
+				return Definitions11{}, err
+			}
+			if err := root.contextError(); err != nil {
 				return Definitions11{}, err
 			}
 			definitions.Imports = append(definitions.Imports, importValue)
@@ -43,6 +68,9 @@ func decodeDefinitions11(root *xmlNode, state *parseState) (Definitions11, error
 			if err := registerSymbol(messages, "message", message.Name); err != nil {
 				return Definitions11{}, err
 			}
+			if err := root.contextError(); err != nil {
+				return Definitions11{}, err
+			}
 			definitions.Messages = append(definitions.Messages, message)
 		case xml.Name{Space: NamespaceWSDL11, Local: "portType"}:
 			portType, err := decodePortType11(child)
@@ -50,6 +78,9 @@ func decodeDefinitions11(root *xmlNode, state *parseState) (Definitions11, error
 				return Definitions11{}, err
 			}
 			if err := registerSymbol(portTypes, "portType", portType.Name); err != nil {
+				return Definitions11{}, err
+			}
+			if err := root.contextError(); err != nil {
 				return Definitions11{}, err
 			}
 			definitions.PortTypes = append(definitions.PortTypes, portType)
@@ -61,6 +92,9 @@ func decodeDefinitions11(root *xmlNode, state *parseState) (Definitions11, error
 			if err := registerSymbol(bindings, "binding", binding.Name); err != nil {
 				return Definitions11{}, err
 			}
+			if err := root.contextError(); err != nil {
+				return Definitions11{}, err
+			}
 			definitions.Bindings = append(definitions.Bindings, binding)
 		case xml.Name{Space: NamespaceWSDL11, Local: "service"}:
 			service, err := decodeService11(child)
@@ -70,11 +104,17 @@ func decodeDefinitions11(root *xmlNode, state *parseState) (Definitions11, error
 			if err := registerSymbol(services, "service", service.Name); err != nil {
 				return Definitions11{}, err
 			}
+			if err := root.contextError(); err != nil {
+				return Definitions11{}, err
+			}
 			definitions.Services = append(definitions.Services, service)
 		default:
 			if child.name.Space != NamespaceWSDL11 {
 				extension, err := decodeExtension(child, NamespaceWSDL11)
 				if err != nil {
+					return Definitions11{}, err
+				}
+				if err := root.contextError(); err != nil {
 					return Definitions11{}, err
 				}
 				definitions.Extensions = append(definitions.Extensions, extension)
@@ -84,7 +124,11 @@ func decodeDefinitions11(root *xmlNode, state *parseState) (Definitions11, error
 	return definitions, nil
 }
 
-func decodeImport11(node *xmlNode) (Import11, error) {
+func decodeImport11(node *xmlNode) (converted Import11, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return Import11{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	extensibility, err := decodeExtensibility(node, NamespaceWSDL11)
 	if err != nil {
 		return Import11{}, err
@@ -105,13 +149,26 @@ func decodeImport11(node *xmlNode) (Import11, error) {
 	return value, nil
 }
 
-func decodeExtensionAttributes(node *xmlNode, coreNamespace string) []ExtensionAttribute {
+func decodeExtensionAttributes(node *xmlNode, coreNamespace string) (converted []ExtensionAttribute) {
+	if node.contextError() != nil {
+		return nil
+	}
+	defer finishConversionValue(node, &converted)
+	if node.contextError() != nil {
+		return nil
+	}
 	attributes := make([]ExtensionAttribute, 0)
 	for _, attribute := range node.attributes {
+		if node.contextError() != nil {
+			return nil
+		}
 		if attribute.Name.Space == "" || attribute.Name.Space == "xmlns" ||
 			attribute.Name.Space == coreNamespace ||
 			attribute.Name.Space == "http://www.w3.org/XML/1998/namespace" {
 			continue
+		}
+		if node.contextError() != nil {
+			return nil
 		}
 		attributes = append(attributes, ExtensionAttribute{
 			Name:  QName{Namespace: attribute.Name.Space, Local: attribute.Name.Local},
@@ -121,7 +178,11 @@ func decodeExtensionAttributes(node *xmlNode, coreNamespace string) []ExtensionA
 	return attributes
 }
 
-func decodeExtension(node *xmlNode, coreNamespace string) (Extension, error) {
+func decodeExtension(node *xmlNode, coreNamespace string) (converted Extension, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return Extension{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	payload, err := marshalNode(node)
 	if err != nil {
 		return Extension{}, fmt.Errorf("wsdl: preserve extension: %w", err)
@@ -131,6 +192,9 @@ func decodeExtension(node *xmlNode, coreNamespace string) (Extension, error) {
 		XML:  payload, Location: node.location,
 	}
 	for _, attribute := range node.attributes {
+		if err := node.contextError(); err != nil {
+			return Extension{}, err
+		}
 		if isNamespaceDeclarationAttribute(attribute) {
 			continue
 		}
@@ -145,6 +209,9 @@ func decodeExtension(node *xmlNode, coreNamespace string) (Extension, error) {
 			extension.Required = required
 			extension.RequiredSet = true
 			continue
+		}
+		if err := node.contextError(); err != nil {
+			return Extension{}, err
 		}
 		extension.Attributes = append(extension.Attributes, ExtensionAttribute{
 			Name:  QName{Namespace: attribute.Name.Space, Local: attribute.Name.Local},
@@ -165,7 +232,11 @@ func xmlBoolean(value string) (bool, bool) {
 	}
 }
 
-func decodeExtensibility(node *xmlNode, coreNamespace string) (Extensibility, error) {
+func decodeExtensibility(node *xmlNode, coreNamespace string) (converted Extensibility, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return Extensibility{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	return decodeExtensibilityExcept(node, coreNamespace, nil)
 }
 
@@ -173,16 +244,26 @@ func decodeExtensibilityExcept(
 	node *xmlNode,
 	coreNamespace string,
 	skip func(*xmlNode) bool,
-) (Extensibility, error) {
+) (converted Extensibility, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return Extensibility{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	value := Extensibility{
 		ExtensionAttributes: decodeExtensionAttributes(node, coreNamespace),
 	}
 	for _, child := range node.children {
+		if err := node.contextError(); err != nil {
+			return Extensibility{}, err
+		}
 		if !shouldDecodeExtension(child, coreNamespace, skip) {
 			continue
 		}
 		extension, err := decodeExtension(child, coreNamespace)
 		if err != nil {
+			return Extensibility{}, err
+		}
+		if err := node.contextError(); err != nil {
 			return Extensibility{}, err
 		}
 		value.Extensions = append(value.Extensions, extension)
@@ -208,7 +289,14 @@ func registerSymbol(symbols map[string]struct{}, kind, name string) error {
 	return nil
 }
 
-func decodeTypes11(ctx context.Context, node *xmlNode, options ParseOptions) (Types11, error) {
+func decodeTypes11(ctx context.Context, node *xmlNode, options ParseOptions) (converted Types11, conversionErr error) {
+	if err := node.useOwner(&parseState{ctx: ctx, options: options}); err != nil {
+		return Types11{}, err
+	}
+	if err := node.contextError(); err != nil {
+		return Types11{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	types := Types11{
 		Extensibility: Extensibility{
 			ExtensionAttributes: decodeExtensionAttributes(node, NamespaceWSDL11),
@@ -216,10 +304,16 @@ func decodeTypes11(ctx context.Context, node *xmlNode, options ParseOptions) (Ty
 		Location: node.location,
 	}
 	for _, child := range node.children {
+		if err := node.contextError(); err != nil {
+			return Types11{}, err
+		}
 		if child.name != (xml.Name{Space: NamespaceXMLSchema, Local: "schema"}) {
 			if child.name.Space != NamespaceWSDL11 {
 				extension, err := decodeExtension(child, NamespaceWSDL11)
 				if err != nil {
+					return Types11{}, err
+				}
+				if err := node.contextError(); err != nil {
 					return Types11{}, err
 				}
 				types.Extensions = append(types.Extensions, extension)
@@ -246,12 +340,19 @@ func decodeTypes11(ctx context.Context, node *xmlNode, options ParseOptions) (Ty
 		if err != nil {
 			return Types11{}, fmt.Errorf("wsdl: parse inline schema: %w", err)
 		}
+		if err := node.contextError(); err != nil {
+			return Types11{}, err
+		}
 		types.Schemas = append(types.Schemas, schema)
 	}
 	return types, nil
 }
 
-func decodeMessage11(node *xmlNode) (Message11, error) {
+func decodeMessage11(node *xmlNode) (converted Message11, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return Message11{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	extensibility, err := decodeExtensibility(node, NamespaceWSDL11)
 	if err != nil {
 		return Message11{}, err
@@ -259,8 +360,14 @@ func decodeMessage11(node *xmlNode) (Message11, error) {
 	message := Message11{
 		Extensibility: extensibility, Name: node.attribute("name"), Location: node.location,
 	}
+	if err := node.contextError(); err != nil {
+		return Message11{}, err
+	}
 	parts := make(map[string]struct{})
 	for _, child := range node.children {
+		if err := node.contextError(); err != nil {
+			return Message11{}, err
+		}
 		if documentation := child.documentation(); documentation != nil {
 			message.Documentation = documentation
 			continue
@@ -280,12 +387,19 @@ func decodeMessage11(node *xmlNode) (Message11, error) {
 		if err != nil {
 			return Message11{}, err
 		}
+		name, err := child.checkedAttribute("name")
+		if err != nil {
+			return Message11{}, err
+		}
 		part := Part11{
 			Extensibility: partExtensibility,
-			Name:          child.attribute("name"), Element: element, Type: typeName,
+			Name:          name, Element: element, Type: typeName,
 			Location: child.location,
 		}
 		if err := registerSymbol(parts, "message part", part.Name); err != nil {
+			return Message11{}, err
+		}
+		if err := node.contextError(); err != nil {
 			return Message11{}, err
 		}
 		message.Parts = append(message.Parts, part)
@@ -293,7 +407,11 @@ func decodeMessage11(node *xmlNode) (Message11, error) {
 	return message, nil
 }
 
-func decodePortType11(node *xmlNode) (PortType11, error) {
+func decodePortType11(node *xmlNode) (converted PortType11, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return PortType11{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	extensibility, err := decodeExtensibility(node, NamespaceWSDL11)
 	if err != nil {
 		return PortType11{}, err
@@ -301,8 +419,14 @@ func decodePortType11(node *xmlNode) (PortType11, error) {
 	portType := PortType11{
 		Extensibility: extensibility, Name: node.attribute("name"), Location: node.location,
 	}
+	if err := node.contextError(); err != nil {
+		return PortType11{}, err
+	}
 	operations := make(map[string]struct{})
 	for _, child := range node.children {
+		if err := node.contextError(); err != nil {
+			return PortType11{}, err
+		}
 		if documentation := child.documentation(); documentation != nil {
 			portType.Documentation = documentation
 			continue
@@ -317,6 +441,9 @@ func decodePortType11(node *xmlNode) (PortType11, error) {
 		if err := registerSymbol(
 			operations, "portType operation", operationSignature11(operation),
 		); err != nil {
+			return PortType11{}, err
+		}
+		if err := node.contextError(); err != nil {
 			return PortType11{}, err
 		}
 		portType.Operations = append(portType.Operations, operation)
@@ -335,7 +462,11 @@ func operationSignature11(operation Operation11) string {
 	return operation.Name + "|" + input + "|" + output
 }
 
-func decodeOperation11(node *xmlNode) (Operation11, error) {
+func decodeOperation11(node *xmlNode) (converted Operation11, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return Operation11{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	extensibility, err := decodeExtensibility(node, NamespaceWSDL11)
 	if err != nil {
 		return Operation11{}, err
@@ -345,9 +476,18 @@ func decodeOperation11(node *xmlNode) (Operation11, error) {
 		Name:          node.attribute("name"), ParameterOrder: splitSpaceSeparated(node.attribute("parameterOrder")),
 		Location: node.location,
 	}
+	if err := node.contextError(); err != nil {
+		return Operation11{}, err
+	}
 	messageOrder := make([]string, 0, 2)
+	if err := node.contextError(); err != nil {
+		return Operation11{}, err
+	}
 	faults := make(map[string]struct{})
 	for _, child := range node.children {
+		if err := node.contextError(); err != nil {
+			return Operation11{}, err
+		}
 		if documentation := child.documentation(); documentation != nil {
 			operation.Documentation = documentation
 			continue
@@ -365,15 +505,24 @@ func decodeOperation11(node *xmlNode) (Operation11, error) {
 				return Operation11{}, fmt.Errorf("wsdl: operation %q has duplicate input", operation.Name)
 			}
 			operation.Input = &message
+			if err := node.contextError(); err != nil {
+				return Operation11{}, err
+			}
 			messageOrder = append(messageOrder, "input")
 		case "output":
 			if operation.Output != nil {
 				return Operation11{}, fmt.Errorf("wsdl: operation %q has duplicate output", operation.Name)
 			}
 			operation.Output = &message
+			if err := node.contextError(); err != nil {
+				return Operation11{}, err
+			}
 			messageOrder = append(messageOrder, "output")
 		case "fault":
 			if err := registerSymbol(faults, "operation fault", message.Name); err != nil {
+				return Operation11{}, err
+			}
+			if err := node.contextError(); err != nil {
 				return Operation11{}, err
 			}
 			operation.Faults = append(operation.Faults, message)
@@ -403,7 +552,11 @@ func operationStyle11(
 	return OperationStyleRequestResponse
 }
 
-func decodeOperationMessage11(node *xmlNode) (OperationMessage11, error) {
+func decodeOperationMessage11(node *xmlNode) (converted OperationMessage11, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return OperationMessage11{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	message, err := node.qnameAttribute("message")
 	if err != nil {
 		return OperationMessage11{}, err
@@ -427,7 +580,11 @@ func isNamespaceDeclarationAttribute(attribute xml.Attr) bool {
 	return attribute.Name.Space == "" && attribute.Name.Local == "xmlns"
 }
 
-func decodeBinding11(node *xmlNode) (Binding11, error) {
+func decodeBinding11(node *xmlNode) (converted Binding11, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return Binding11{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	typeName, err := node.qnameAttribute("type")
 	if err != nil {
 		return Binding11{}, err
@@ -447,8 +604,14 @@ func decodeBinding11(node *xmlNode) (Binding11, error) {
 		Extensibility: extensibility,
 		Name:          node.attribute("name"), Type: typeName, Location: node.location,
 	}
+	if err := node.contextError(); err != nil {
+		return Binding11{}, err
+	}
 	operations := make(map[string]struct{})
 	for _, child := range node.children {
+		if err := node.contextError(); err != nil {
+			return Binding11{}, err
+		}
 		if documentation := child.documentation(); documentation != nil {
 			binding.Documentation = documentation
 			continue
@@ -480,6 +643,9 @@ func decodeBinding11(node *xmlNode) (Binding11, error) {
 			); err != nil {
 				return Binding11{}, err
 			}
+			if err := node.contextError(); err != nil {
+				return Binding11{}, err
+			}
 			binding.Operations = append(binding.Operations, operation)
 		}
 	}
@@ -497,7 +663,11 @@ func bindingOperationSignature11(operation BindingOperation11) string {
 	return operation.Name + "|" + input + "|" + output
 }
 
-func decodeBindingOperation11(node *xmlNode) (BindingOperation11, error) {
+func decodeBindingOperation11(node *xmlNode) (converted BindingOperation11, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return BindingOperation11{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	extensibility, err := decodeExtensibilityExcept(
 		node,
 		NamespaceWSDL11,
@@ -512,8 +682,14 @@ func decodeBindingOperation11(node *xmlNode) (BindingOperation11, error) {
 	operation := BindingOperation11{
 		Extensibility: extensibility, Name: node.attribute("name"), Location: node.location,
 	}
+	if err := node.contextError(); err != nil {
+		return BindingOperation11{}, err
+	}
 	faults := make(map[string]struct{})
 	for _, child := range node.children {
+		if err := node.contextError(); err != nil {
+			return BindingOperation11{}, err
+		}
 		if documentation := child.documentation(); documentation != nil {
 			operation.Documentation = documentation
 			continue
@@ -528,12 +704,9 @@ func decodeBindingOperation11(node *xmlNode) (BindingOperation11, error) {
 				Location:  child.location,
 			}
 			if soapOperation.Version == Version12 && child.hasAttribute("soapActionRequired") {
-				required, valid := xmlBoolean(child.attribute("soapActionRequired"))
-				if !valid {
-					return BindingOperation11{}, fmt.Errorf(
-						"wsdl: invalid SOAP action required value %q",
-						child.attribute("soapActionRequired"),
-					)
+				required, err := decodeSOAPActionRequired11(child)
+				if err != nil {
+					return BindingOperation11{}, err
 				}
 				soapOperation.ActionRequired = required
 				soapOperation.ActionRequiredSet = true
@@ -571,13 +744,37 @@ func decodeBindingOperation11(node *xmlNode) (BindingOperation11, error) {
 			if err := registerSymbol(faults, "binding operation fault", message.Name); err != nil {
 				return BindingOperation11{}, err
 			}
+			if err := node.contextError(); err != nil {
+				return BindingOperation11{}, err
+			}
 			operation.Faults = append(operation.Faults, message)
 		}
 	}
 	return operation, nil
 }
 
-func decodeBindingMessage11(node *xmlNode) (BindingMessage11, error) {
+// The caller has established attribute presence before this lexical handoff.
+func decodeSOAPActionRequired11(node *xmlNode) (converted bool, conversionErr error) {
+	defer finishConversion(node, &converted, &conversionErr)
+	lexical, err := node.checkedAttribute("soapActionRequired")
+	if err != nil {
+		return false, err
+	}
+	required, valid := xmlBoolean(lexical)
+	if !valid {
+		return false, fmt.Errorf(
+			"wsdl: invalid SOAP action required value %q",
+			lexical,
+		)
+	}
+	return required, nil
+}
+
+func decodeBindingMessage11(node *xmlNode) (converted BindingMessage11, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return BindingMessage11{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	extensibility, err := decodeExtensibilityExcept(
 		node,
 		NamespaceWSDL11,
@@ -609,6 +806,9 @@ func decodeBindingMessage11(node *xmlNode) (BindingMessage11, error) {
 		Extensibility: extensibility, Name: node.attribute("name"), Location: node.location,
 	}
 	for _, child := range node.children {
+		if err := node.contextError(); err != nil {
+			return BindingMessage11{}, err
+		}
 		if documentation := child.documentation(); documentation != nil {
 			message.Documentation = documentation
 			continue
@@ -621,6 +821,9 @@ func decodeBindingMessage11(node *xmlNode) (BindingMessage11, error) {
 		if isSOAPExtension(child, "header") {
 			header, err := decodeSOAPHeader11(child)
 			if err != nil {
+				return BindingMessage11{}, err
+			}
+			if err := node.contextError(); err != nil {
 				return BindingMessage11{}, err
 			}
 			message.SOAPHeaders = append(message.SOAPHeaders, header)
@@ -651,21 +854,34 @@ func decodeBindingMessage11(node *xmlNode) (BindingMessage11, error) {
 			}
 		case xml.Name{Space: NamespaceMIMEBinding, Local: "content"}:
 			mime := ensureMIMEMessage11(&message)
+			if err := node.contextError(); err != nil {
+				return BindingMessage11{}, err
+			}
 			mime.Contents = append(mime.Contents, decodeMIMEContent11(child))
 		case xml.Name{Space: NamespaceMIMEBinding, Local: "mimeXml"}:
 			mime := ensureMIMEMessage11(&message)
+			if err := node.contextError(); err != nil {
+				return BindingMessage11{}, err
+			}
 			mime.XML = append(mime.XML, MIMEXML11{
 				Part: child.attribute("part"), Location: child.location,
 			})
 		case xml.Name{Space: NamespaceMIMEBinding, Local: "multipartRelated"}:
 			mime := ensureMIMEMessage11(&message)
+			if err := node.contextError(); err != nil {
+				return BindingMessage11{}, err
+			}
 			mime.Multipart = append(mime.Multipart, decodeMIMEMultipart11(child))
 		}
 	}
 	return message, nil
 }
 
-func decodeSOAPBody11(node *xmlNode) SOAPBody11 {
+func decodeSOAPBody11(node *xmlNode) (converted SOAPBody11) {
+	if node.contextError() != nil {
+		return SOAPBody11{}
+	}
+	defer finishConversionValue(node, &converted)
 	return SOAPBody11{
 		Version:          soapVersion(node.name.Space),
 		Use:              SOAPUse(node.attribute("use")),
@@ -680,7 +896,11 @@ func decodeSOAPBody11(node *xmlNode) SOAPBody11 {
 	}
 }
 
-func decodeSOAPHeader11(node *xmlNode) (SOAPHeader11, error) {
+func decodeSOAPHeader11(node *xmlNode) (converted SOAPHeader11, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return SOAPHeader11{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	message, err := node.qnameAttribute("message")
 	if err != nil {
 		return SOAPHeader11{}, err
@@ -698,12 +918,18 @@ func decodeSOAPHeader11(node *xmlNode) (SOAPHeader11, error) {
 		Location:         node.location,
 	}
 	for _, child := range node.children {
+		if err := node.contextError(); err != nil {
+			return SOAPHeader11{}, err
+		}
 		if !isSOAPExtension(child, "headerfault") {
 			continue
 		}
 		faultMessage, decodeErr := child.qnameAttribute("message")
 		if decodeErr != nil {
 			return SOAPHeader11{}, decodeErr
+		}
+		if err := node.contextError(); err != nil {
+			return SOAPHeader11{}, err
 		}
 		header.HeaderFaults = append(header.HeaderFaults, SOAPHeaderFault11{
 			Version:          soapVersion(child.name.Space),
@@ -721,7 +947,11 @@ func decodeSOAPHeader11(node *xmlNode) (SOAPHeader11, error) {
 	return header, nil
 }
 
-func soapEncodingStyles(node *xmlNode) []string {
+func soapEncodingStyles(node *xmlNode) (converted []string) {
+	if node.contextError() != nil {
+		return nil
+	}
+	defer finishConversionValue(node, &converted)
 	if !node.hasAttribute("encodingStyle") {
 		return nil
 	}
@@ -738,25 +968,45 @@ func ensureMIMEMessage11(message *BindingMessage11) *MIMEMessage11 {
 	return message.MIME
 }
 
-func decodeMIMEContent11(node *xmlNode) MIMEContent11 {
+func decodeMIMEContent11(node *xmlNode) (converted MIMEContent11) {
+	if node.contextError() != nil {
+		return MIMEContent11{}
+	}
+	defer finishConversionValue(node, &converted)
 	return MIMEContent11{
 		Part: node.attribute("part"), Type: node.attribute("type"),
 		Location: node.location,
 	}
 }
 
-func decodeMIMEMultipart11(node *xmlNode) MIMEMultipart11 {
+func decodeMIMEMultipart11(node *xmlNode) (converted MIMEMultipart11) {
+	if node.contextError() != nil {
+		return MIMEMultipart11{}
+	}
+	defer finishConversionValue(node, &converted)
 	multipart := MIMEMultipart11{Location: node.location}
 	for _, child := range node.children {
+		if node.contextError() != nil {
+			return MIMEMultipart11{}
+		}
 		if child.name != (xml.Name{Space: NamespaceMIMEBinding, Local: "part"}) {
 			continue
 		}
 		part := MIMEPart11{Location: child.location}
 		for _, content := range child.children {
+			if node.contextError() != nil {
+				return MIMEMultipart11{}
+			}
 			switch content.name {
 			case xml.Name{Space: NamespaceMIMEBinding, Local: "content"}:
+				if node.contextError() != nil {
+					return MIMEMultipart11{}
+				}
 				part.Contents = append(part.Contents, decodeMIMEContent11(content))
 			case xml.Name{Space: NamespaceMIMEBinding, Local: "mimeXml"}:
+				if node.contextError() != nil {
+					return MIMEMultipart11{}
+				}
 				part.XML = append(part.XML, MIMEXML11{
 					Part: content.attribute("part"), Location: content.location,
 				})
@@ -767,12 +1017,19 @@ func decodeMIMEMultipart11(node *xmlNode) MIMEMultipart11 {
 				}
 			}
 		}
+		if node.contextError() != nil {
+			return MIMEMultipart11{}
+		}
 		multipart.Parts = append(multipart.Parts, part)
 	}
 	return multipart
 }
 
-func decodeService11(node *xmlNode) (Service11, error) {
+func decodeService11(node *xmlNode) (converted Service11, conversionErr error) {
+	if err := node.contextError(); err != nil {
+		return Service11{}, err
+	}
+	defer finishConversion(node, &converted, &conversionErr)
 	extensibility, err := decodeExtensibility(node, NamespaceWSDL11)
 	if err != nil {
 		return Service11{}, err
@@ -780,8 +1037,14 @@ func decodeService11(node *xmlNode) (Service11, error) {
 	service := Service11{
 		Extensibility: extensibility, Name: node.attribute("name"), Location: node.location,
 	}
+	if err := node.contextError(); err != nil {
+		return Service11{}, err
+	}
 	ports := make(map[string]struct{})
 	for _, child := range node.children {
+		if err := node.contextError(); err != nil {
+			return Service11{}, err
+		}
 		if documentation := child.documentation(); documentation != nil {
 			service.Documentation = documentation
 			continue
@@ -804,14 +1067,21 @@ func decodeService11(node *xmlNode) (Service11, error) {
 		if err != nil {
 			return Service11{}, err
 		}
+		name, err := child.checkedAttribute("name")
+		if err != nil {
+			return Service11{}, err
+		}
 		port := Port11{
 			Extensibility: portExtensibility,
-			Name:          child.attribute("name"), Binding: binding, Location: child.location,
+			Name:          name, Binding: binding, Location: child.location,
 		}
 		if err := registerSymbol(ports, "service port", port.Name); err != nil {
 			return Service11{}, err
 		}
 		for _, extension := range child.children {
+			if err := node.contextError(); err != nil {
+				return Service11{}, err
+			}
 			if documentation := extension.documentation(); documentation != nil {
 				port.Documentation = documentation
 			} else if isSOAPExtension(extension, "address") {
@@ -826,6 +1096,9 @@ func decodeService11(node *xmlNode) (Service11, error) {
 					Location: extension.attribute("location"), Source: extension.location,
 				}
 			}
+		}
+		if err := node.contextError(); err != nil {
+			return Service11{}, err
 		}
 		service.Ports = append(service.Ports, port)
 	}

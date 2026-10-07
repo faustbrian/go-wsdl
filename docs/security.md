@@ -27,5 +27,24 @@ details. Custom resolvers still own their directly returned error text; WSDL
 compiler wrappers do not print that text by default.
 
 This behavior is a pending next-major change on main, not a guarantee of the
-published v1.0.0 release. The `/v2` migration and release, parser-preflight
-cancellation, Wire/XSD major adoption and versioned threat model remain pending.
+published v1.0.0 release. This source selects public Wire v3 for XML parsing
+and serialization, with WSDL's document budget explicitly applied to charset
+conversion in both XML passes. Inspected Wire diagnostic types and sentinels
+use `/v3`; they are not type-identical to the v1 diagnostics. The `/v2` migration
+and release, XSD major adoption and versioned threat model remain pending.
+
+## Coverage and qualification
+
+The root module collects coverage evidence under the approved risk-based
+Golib assurance policy. All coverage-required packages remain instrumented,
+the complete module test command must succeed, and malformed or missing
+coverage profiles fail. A statement percentage does not certify adequacy:
+public regression tests, caller coverage and independent review establish
+the affected contracts. Defensive cooperative-cancellation checkpoints are
+retained rather than removed merely to improve a coverage percentage.
+
+CI builds the pinned development tooling source to support this explicit
+policy; it does not claim that the public v1.8.5 executable implements it.
+Native mutation, security scanners and the required workflow result still
+gate qualification. Historical failures remain failures; source review and
+focused tests do not establish release readiness or public consumption.

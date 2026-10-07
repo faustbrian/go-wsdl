@@ -2,8 +2,8 @@
 
 ## 2026-09-03 public proxy reconciliation
 
-The WSDL module retains its existing `go-wire` and `go-xsd` v1.0.0
-requirements. This review changes only their recorded module-content checksums
+At this review, the WSDL module retained its `go-wire` and `go-xsd` v1.0.0
+requirements. The review changed only their recorded module-content checksums
 from the historical bootstrap archive identities to the immutable identities
 served by the public Go proxy and authenticated by the Go checksum database.
 The corresponding `go.mod` checksums were already public and remain unchanged.

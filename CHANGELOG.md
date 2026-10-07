@@ -4,10 +4,40 @@
 
 ### Fixed
 
+- Check cancellation between compiler-owned reference, model, inheritance,
+  graph, and schema-reference operations and before compilation success,
+  including schema-free descriptions. Observed cancellation returns no
+  partial compiled set and does not poison reusable compiler state.
+  Context-independent model validation, XSD calls, and standard-library
+  sorting remain cooperative call boundaries, not preemptively interrupted.
+
+- Honor parser cancellation before owned buffered-tree conversion, during
+  recursive tree checks, at version-model conversion admission, and before
+  successful document publication. Cancellation preserves its inspectable cause
+  without publishing a partial document. Both version converters, nested
+  attributes/components/adjuncts and preserved-XML traversal share that owner
+  and check cancellation throughout their owned loops and before success.
+  Published models remain independent of the parse context. Lexical validation,
+  standard-library sorting and escaping calls are cooperative boundaries, not
+  preemptively interrupted; compiler graph and semantic validation are separate
+  cancellation boundaries.
+
 - Stop resolver-chain fallback after caller cancellation without invoking a
   subsequent lookup, while preserving successful and terminal-error results.
 
+- Stop parse-owned preserved-XML serialization after cancellation during
+  successful namespace, attribute, or text escaping, before writing further
+  delimiters. Ordinary serialization output and escaping-error precedence are
+  unchanged; escaping itself is not preemptively interrupted.
+
 ### Changed
+
+- Adopt public `go-wire/v3 v3.0.0` at the shared XML parse and serialization
+  boundaries. Apply WSDL's normalized document-byte limit to vendor charset
+  conversion in both XML passes, preserving admitted documents above Wire's
+  default conversion quota. Unwrapped Wire diagnostic types and sentinels now
+  use `/v3`; consumers inspecting them must migrate those imports. XSD remains
+  on its published v1 API until the separate schema migration is delivered.
 
 - Make library-produced default error strings categorical; diagnostic messages,
   paths, locations, conflict details and wrapped causes remain explicitly

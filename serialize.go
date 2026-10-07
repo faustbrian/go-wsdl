@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/faustbrian/go-wire/xmlwire"
+	"github.com/faustbrian/go-wire/v3/xmlwire"
 	"github.com/faustbrian/go-wsdl/internal/errorprivacy"
 )
 
