@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "packages": [
+    {
+      "module_directory": ".",
+      "package_directory": "compile",
+      "source_digest": "51d9e3ae435d7f8589d71e8b1f48886f9b54d63d07674164c18f3aa0e22a22a1",
+      "gremlins_version": "v0.6.0",
+      "gremlins_verifier_sha256": "390cf4085a0063fe5dcaa29ce942ea4cb8c7876347da90376b65dc8c5c811104",
+      "mutations": [
+        {
+          "file_name": "compile.go", "type": "INVERT_NEGATIVES", "line": 2331, "column": 10,
+          "contract_domain": "Public Compiler.Compile cancellation while inheriting privately owned WSDL interface faults",
+          "reason": "Independent reviewer /root/knapsack_stack_equivalence_review; reviewed 2026-10-08; expires 2026-11-07 or any caller/result-use, ownership/publication, sticky-error, cancellation-checkpoint, resource-accounting or verifier change. Pinned Gremlins replaces unary minus with plus. The sole caller tests <0 without indexing. Cancellation is already sticky; +1 skips one private QName append and counter increment, reducing transient work. The next checkpoint returns the same cancellation before sorting or publication; buildSet returns nil and Compile preserves the identical privacy-wrapped cause. Identical allocation profiling and caller-supplied private-helper slices are not claimed. Native37755856753 remains FAILED with this coordinate LIVED; no other survivor is accepted."
+        },
+        {
+          "file_name": "compile.go", "type": "ARITHMETIC_BASE", "line": 2331, "column": 10,
+          "contract_domain": "Public Compiler.Compile cancellation while inheriting privately owned WSDL interface faults",
+          "reason": "Independent reviewer /root/knapsack_stack_equivalence_review; reviewed 2026-10-08; expires 2026-11-07 or any caller/result-use, ownership/publication, sticky-error, cancellation-checkpoint, resource-accounting or verifier change. Pinned Gremlins replaces unary minus with plus. The sole caller tests <0 without indexing. Cancellation is already sticky; +1 skips one private QName append and counter increment, reducing transient work. The next checkpoint returns the same cancellation before sorting or publication; buildSet returns nil and Compile preserves the identical privacy-wrapped cause. Identical allocation profiling and caller-supplied private-helper slices are not claimed. Native37755856753 remains FAILED with this coordinate LIVED; no other survivor is accepted."
+        },
+        {
+          "file_name": "compile.go", "type": "INVERT_NEGATIVES", "line": 2336, "column": 11,
+          "contract_domain": "Public Compiler.Compile cancellation while scanning privately owned WSDL interface faults",
+          "reason": "Independent reviewer /root/knapsack_stack_equivalence_review; reviewed 2026-10-08; expires 2026-11-07 or any caller/result-use, ownership/publication, sticky-error, cancellation-checkpoint, resource-accounting or verifier change. Pinned Gremlins replaces unary minus with plus. The sole caller tests <0 without indexing. Cancellation is already sticky; +1 skips one private QName append and counter increment, reducing transient work. The next checkpoint returns the same cancellation before sorting or publication; buildSet returns nil and Compile preserves the identical privacy-wrapped cause. Identical allocation profiling and caller-supplied private-helper slices are not claimed. Native37755856753 remains FAILED with this coordinate LIVED; no other survivor is accepted."
+        },
+        {
+          "file_name": "compile.go", "type": "ARITHMETIC_BASE", "line": 2336, "column": 11,
+          "contract_domain": "Public Compiler.Compile cancellation while scanning privately owned WSDL interface faults",
+          "reason": "Independent reviewer /root/knapsack_stack_equivalence_review; reviewed 2026-10-08; expires 2026-11-07 or any caller/result-use, ownership/publication, sticky-error, cancellation-checkpoint, resource-accounting or verifier change. Pinned Gremlins replaces unary minus with plus. The sole caller tests <0 without indexing. Cancellation is already sticky; +1 skips one private QName append and counter increment, reducing transient work. The next checkpoint returns the same cancellation before sorting or publication; buildSet returns nil and Compile preserves the identical privacy-wrapped cause. Identical allocation profiling and caller-supplied private-helper slices are not claimed. Native37755856753 remains FAILED with this coordinate LIVED; no other survivor is accepted."
+        }
+      ]
+    }
+  ]
+}
