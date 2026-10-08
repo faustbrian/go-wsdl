@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/faustbrian/go-wsdl/internal/errorprivacy"
+	"github.com/faustbrian/go-wsdl/v2/internal/errorprivacy"
 )
 
 var (

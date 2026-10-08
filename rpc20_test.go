@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	wsdl "github.com/faustbrian/go-wsdl"
+	wsdl "github.com/faustbrian/go-wsdl/v2"
 )
 
 func TestWSDL20RPCSignatureRoundTrips(t *testing.T) {

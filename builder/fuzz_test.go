@@ -5,8 +5,8 @@ import (
 	"context"
 	"testing"
 
-	wsdl "github.com/faustbrian/go-wsdl"
-	"github.com/faustbrian/go-wsdl/builder"
+	wsdl "github.com/faustbrian/go-wsdl/v2"
+	"github.com/faustbrian/go-wsdl/v2/builder"
 )
 
 func FuzzBuilderRoundTrip(f *testing.F) {

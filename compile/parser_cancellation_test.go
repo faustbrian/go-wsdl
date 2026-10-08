@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	wsdlcompile "github.com/faustbrian/go-wsdl/compile"
+	wsdlcompile "github.com/faustbrian/go-wsdl/v2/compile"
 )
 
 func TestCompilerRemainsReusableAfterParserCancellation(t *testing.T) {

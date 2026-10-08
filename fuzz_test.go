@@ -5,7 +5,7 @@ import (
 	"context"
 	"testing"
 
-	wsdl "github.com/faustbrian/go-wsdl"
+	wsdl "github.com/faustbrian/go-wsdl/v2"
 )
 
 var fuzzParseOptions = wsdl.ParseOptions{

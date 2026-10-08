@@ -9,7 +9,7 @@ import (
 	"io"
 
 	"github.com/faustbrian/go-wire/v3/xmlwire"
-	"github.com/faustbrian/go-wsdl/internal/errorprivacy"
+	"github.com/faustbrian/go-wsdl/v2/internal/errorprivacy"
 )
 
 const (

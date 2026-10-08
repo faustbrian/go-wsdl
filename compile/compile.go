@@ -13,9 +13,9 @@ import (
 	"sort"
 	"strconv"
 
-	wsdl "github.com/faustbrian/go-wsdl"
-	"github.com/faustbrian/go-wsdl/internal/errorprivacy"
-	"github.com/faustbrian/go-wsdl/resolve"
+	wsdl "github.com/faustbrian/go-wsdl/v2"
+	"github.com/faustbrian/go-wsdl/v2/internal/errorprivacy"
+	"github.com/faustbrian/go-wsdl/v2/resolve"
 	xsd "github.com/faustbrian/go-xsd"
 	xsdcompile "github.com/faustbrian/go-xsd/compile"
 	xsdresolve "github.com/faustbrian/go-xsd/resolve"

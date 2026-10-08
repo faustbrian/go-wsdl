@@ -17,6 +17,12 @@ The latest stable `v1` release line receives security fixes. Support windows
 are documented per module and in
 [`COMPATIBILITY.md`](COMPATIBILITY.md).
 
+Main prepares `/v2`; publication has not occurred. Its source boundaries and
+residual obligations are recorded in the
+[versioned threat model](docs/security-threat-model.md). A module-path change
+alone does not establish release qualification or change the supported public
+release line.
+
 ## Security Gates
 
 Releases require isolated tests, race and hostile-input checks, exact coverage

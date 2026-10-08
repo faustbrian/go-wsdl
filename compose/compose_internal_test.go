@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	wsdl "github.com/faustbrian/go-wsdl"
+	wsdl "github.com/faustbrian/go-wsdl/v2"
 	xsd "github.com/faustbrian/go-xsd"
 )
 

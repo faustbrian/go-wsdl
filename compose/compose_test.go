@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	wsdl "github.com/faustbrian/go-wsdl"
-	"github.com/faustbrian/go-wsdl/compose"
+	wsdl "github.com/faustbrian/go-wsdl/v2"
+	"github.com/faustbrian/go-wsdl/v2/compose"
 	xsd "github.com/faustbrian/go-xsd"
 )
 

@@ -26,12 +26,14 @@ Applications own authorization and redaction when explicitly recording those
 details. Custom resolvers still own their directly returned error text; WSDL
 compiler wrappers do not print that text by default.
 
-This behavior is a pending next-major change on main, not a guarantee of the
+This behavior is a v2 change on main, not a guarantee of the
 published v1.0.0 release. This source selects public Wire v3 for XML parsing
 and serialization, with WSDL's document budget explicitly applied to charset
 conversion in both XML passes. Inspected Wire diagnostic types and sentinels
-use `/v3`; they are not type-identical to the v1 diagnostics. The `/v2` migration
-and release, XSD major adoption and versioned threat model remain pending.
+use `/v3`; they are not type-identical to the v1 diagnostics. Main uses the
+`/v2` WSDL identity. Its public release and XSD major adoption remain pending.
+The [versioned threat model](security-threat-model.md) identifies owned
+boundaries and conditional collaborator obligations; it is not release proof.
 
 ## Coverage and qualification
 

@@ -6,9 +6,9 @@ import (
 	"sync"
 	"testing"
 
-	wsdl "github.com/faustbrian/go-wsdl"
-	wsdlcompile "github.com/faustbrian/go-wsdl/compile"
-	"github.com/faustbrian/go-wsdl/resolve"
+	wsdl "github.com/faustbrian/go-wsdl/v2"
+	wsdlcompile "github.com/faustbrian/go-wsdl/v2/compile"
+	"github.com/faustbrian/go-wsdl/v2/resolve"
 	xsdresolve "github.com/faustbrian/go-xsd/resolve"
 )
 

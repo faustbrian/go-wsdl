@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	wsdl "github.com/faustbrian/go-wsdl"
+	wsdl "github.com/faustbrian/go-wsdl/v2"
 )
 
 // phaseCancellationContext cancels a real context after an Err snapshot, so

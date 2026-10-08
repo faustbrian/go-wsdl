@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	wsdl "github.com/faustbrian/go-wsdl"
+	wsdl "github.com/faustbrian/go-wsdl/v2"
 )
 
 func TestParseWSDL11CoreAndSOAPDescription(t *testing.T) {

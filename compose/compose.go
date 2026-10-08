@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"sort"
 
-	wsdl "github.com/faustbrian/go-wsdl"
-	"github.com/faustbrian/go-wsdl/internal/errorprivacy"
+	wsdl "github.com/faustbrian/go-wsdl/v2"
+	"github.com/faustbrian/go-wsdl/v2/internal/errorprivacy"
 	xsd "github.com/faustbrian/go-xsd"
 )
 

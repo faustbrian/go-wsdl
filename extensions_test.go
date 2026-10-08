@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	wsdl "github.com/faustbrian/go-wsdl"
+	wsdl "github.com/faustbrian/go-wsdl/v2"
 )
 
 func TestParsePreservesWSDL11ExtensionElementsAndAttributes(t *testing.T) {

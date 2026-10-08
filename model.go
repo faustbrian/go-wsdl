@@ -4,7 +4,7 @@ package wsdl
 import (
 	"context"
 
-	"github.com/faustbrian/go-wsdl/internal/errorprivacy"
+	"github.com/faustbrian/go-wsdl/v2/internal/errorprivacy"
 	xsd "github.com/faustbrian/go-xsd"
 )
 
