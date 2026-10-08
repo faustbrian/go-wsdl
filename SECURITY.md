@@ -13,15 +13,16 @@ timelines depend on severity and verification.
 
 ## Supported Versions
 
-The latest stable `v1` release line receives security fixes. Support windows
-are documented per module and in
+The latest stable release is
+[`github.com/faustbrian/go-wsdl/v2` v2.0.0](https://github.com/faustbrian/go-wsdl/releases/tag/v2.0.0).
+Support windows are documented per module and in
 [`COMPATIBILITY.md`](COMPATIBILITY.md).
 
-Main prepares `/v2`; publication has not occurred. Its source boundaries and
-residual obligations are recorded in the
-[versioned threat model](docs/security-threat-model.md). A module-path change
-alone does not establish release qualification or change the supported public
-release line.
+The v2 release includes categorical default errors and the owned cancellation
+checks described in the [versioned threat model](docs/security-threat-model.md).
+Its publication does not establish that historical v1 versions contain those
+fixes. Reports concerning v1 remain subject to assessment through the private
+reporting route above. Adoption of the separate XSD major remains pending.
 
 ## Security Gates
 

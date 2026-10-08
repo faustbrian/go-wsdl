@@ -15,7 +15,7 @@ bound redirects and response bytes, and avoid forwarding credentials.
 Cancellation stops parsing and graph resolution. Returned models and compiled
 sets own their mutable slices so callers cannot mutate shared compiler state.
 
-## Default errors and explicit diagnostics (unreleased)
+## Default errors and explicit diagnostics (v2.0.0)
 
 Library-produced default error strings contain a fixed failure category, not
 resource URIs, component names, lexical values or collaborator error text.
@@ -26,12 +26,12 @@ Applications own authorization and redaction when explicitly recording those
 details. Custom resolvers still own their directly returned error text; WSDL
 compiler wrappers do not print that text by default.
 
-This behavior is a v2 change on main, not a guarantee of the
+This behavior is included in public v2.0.0, not a guarantee of the
 published v1.0.0 release. This source selects public Wire v3 for XML parsing
 and serialization, with WSDL's document budget explicitly applied to charset
 conversion in both XML passes. Inspected Wire diagnostic types and sentinels
 use `/v3`; they are not type-identical to the v1 diagnostics. Main uses the
-`/v2` WSDL identity. Its public release and XSD major adoption remain pending.
+`/v2` WSDL identity. The separate XSD major adoption remains pending.
 The [versioned threat model](security-threat-model.md) identifies owned
 boundaries and conditional collaborator obligations; it is not release proof.
 

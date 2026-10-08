@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Documentation
+
+- Align security and release guidance with published v2.0.0 while retaining
+  the pending XSD major adoption and historical v1 assessment boundaries.
+
+## 2.0.0 - 2026-10-08
+
 ### Fixed
 
 - Check cancellation between compiler-owned reference, model, inheritance,
@@ -35,7 +42,7 @@
 - Prepare the root module and every owned package under the official `/v2`
   identity for v2.0.0 from main, without version-specific source directories.
   Update root and subpackage imports together. Preserve the historical v1 API
-  snapshot and capture a genuine v2 baseline. Public publication is pending.
+  snapshot and capture a genuine v2 baseline. Publish v2.0.0 from main.
 
 - Adopt public `go-wire/v3 v3.0.0` at the shared XML parse and serialization
   boundaries. Apply WSDL's normalized document-byte limit to vendor charset
@@ -46,9 +53,9 @@
 
 - Make library-produced default error strings categorical; diagnostic messages,
   paths, locations, conflict details and wrapped causes remain explicitly
-  inspectable. This breaking text contract is intended for the next major
-  release, not a v1 patch; match errors with `errors.Is`/`errors.As` instead of
-  text. Main now uses the `/v2` module/import identity; publication is pending.
+  inspectable. This breaking text contract is included in v2.0.0,
+  not a v1 patch; match errors with `errors.Is`/`errors.As` instead of text.
+  Use the `/v2` module/import identity when adopting this release.
 
 - Adopt the `go-library-tools` v1.4.0 schema-v2 cohesion contract, local
   `make cohesion` gate, and immutable reusable CI workflow without changing
