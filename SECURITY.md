@@ -14,15 +14,16 @@ timelines depend on severity and verification.
 ## Supported Versions
 
 The latest stable release is
-[`github.com/faustbrian/go-wsdl/v2` v2.0.0](https://github.com/faustbrian/go-wsdl/releases/tag/v2.0.0).
+[`github.com/faustbrian/go-wsdl/v3` v3.0.0](https://github.com/faustbrian/go-wsdl/releases/tag/v3.0.0).
 Support windows are documented per module and in
 [`COMPATIBILITY.md`](COMPATIBILITY.md).
 
-The v2 release includes categorical default errors and the owned cancellation
-checks described in the [versioned threat model](docs/security-threat-model.md).
+The v3 release retains categorical default errors and owned cancellation
+checks and adopts public XSD v2 with finite first-parse schema allowances,
+as described in the [versioned threat model](docs/security-threat-model.md).
 Its publication does not establish that historical v1 versions contain those
 fixes. Reports concerning v1 remain subject to assessment through the private
-reporting route above. Adoption of the separate XSD major remains pending.
+reporting route above. The separate XSD v2 release is publicly available.
 
 ## Security Gates
 

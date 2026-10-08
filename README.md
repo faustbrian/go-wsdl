@@ -22,8 +22,8 @@ another consumer.
 
 ## Status
 
-Main prepares the v3 module and supports Go 1.27.0 or later. Public v2.0.0
-is available; v3 publication remains pending until XSD v2 adoption is qualified.
+Public v3.0.0 is available and supports Go 1.27.0 or later. It adopts public
+XSD v2 types while retaining Wire v3 and categorical default errors.
 
 ## Installation
 
@@ -31,8 +31,7 @@ is available; v3 publication remains pending until XSD v2 adoption is qualified.
 go get github.com/faustbrian/go-wsdl/v3@v3.0.0
 ```
 
-Run this command after v3.0.0 is published. Import only the packages your
-application uses. The root `wsdl` package owns
+Import only the packages your application uses. The root `wsdl` package owns
 document parsing, validation, and shared description types; `compile` owns
 explicit resource resolution and immutable compiled graphs.
 

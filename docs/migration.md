@@ -1,7 +1,6 @@
 # Migration
 
-Main prepares the v3 API; its public release remains pending. Pin a released
-version, review the
+Public v3.0.0 is available from main. Pin a released version, review the
 [changelog](../CHANGELOG.md), and evaluate semantic diffs when upgrading.
 Construct documents through `NewDocument11` or `NewDocument20`; do not depend
 on lexical namespace prefixes or source attribute order.
@@ -35,11 +34,11 @@ Public WSDL v2.0.0 retains `github.com/faustbrian/go-xsd v1.0.0` types.
 
 ## V3 XML Schema adoption
 
-Main prepares `github.com/faustbrian/go-wsdl/v3` with
+Published v3.0.0 uses `github.com/faustbrian/go-wsdl/v3` with
 `github.com/faustbrian/go-xsd/v2 v2.0.0`, without version-specific source
-directories or branches. Both publications remain qualification gates for
-this migration; development against an integrated prerequisite is not public
-release evidence. Update every WSDL and XSD root/subpackage import together.
+directories or branches. Both releases are publicly available; clean public
+consumer checks exercise their composition. Update every WSDL and XSD
+root/subpackage import together.
 `Types11.Schemas`, `Types20.Schemas`, `Types20.Imports`, `SchemaResolver`,
 `SchemaLimits` and `Set.Schemas()` expose XSD v2 named types. Old-major values
 are not assignable; reparse or explicitly migrate application-owned models.

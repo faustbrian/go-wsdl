@@ -1,8 +1,8 @@
 # WSDL security threat model
 
-Model version: 1.0.0. Reviewed scope: public v2.0.0, 2026-10-08.
-Owner: Brian Faust, WSDL maintainer. The signed v2.0.0 release is published;
-separate XSD major adoption remains pending.
+Model version: 2.0.0. Reviewed scope: public v3.0.0, 2026-10-08.
+Owner: Brian Faust, WSDL maintainer. The signed v3.0.0 release is published;
+actual clean public consumption includes XSD v2 composition.
 
 ## Assets and boundaries
 
@@ -10,7 +10,7 @@ Untrusted XML, names, URIs, extensions and embedded schemas enter `Parse`.
 Caller-created models enter validation, serialization, composition and code
 generation. Import graphs enter `compile`; injected WSDL and XSD resolvers are
 trusted application collaborators, not library-owned network implementations.
-Wire v3 owns XML token/encoding boundaries; published XSD v1 owns schema
+Wire v3.0.0 owns XML token/encoding boundaries; published XSD v2.0.0 owns schema
 compilation. WSDL does not authenticate users, execute services, generate
 executable clients, manage credentials or perform cryptographic operations.
 
@@ -51,13 +51,18 @@ a public release or an arbitrary application's I/O policy.
 
 ## Conditional residual risks
 
-### Pending v3 supplier boundary
+### Published v3 supplier boundary
 
-Main's v3 candidate adopts XSD v2 named types. The v2 release scope above is
-historical and does not certify this candidate. Both direct inline parsers and
+Public v3.0.0 adopts XSD v2 named types; the previous model's v2 scope remains
+historical. Both direct inline parsers and
 compiler root/import first parses forward caller-selected finite namespace and
 model-copy allowances. The inline schema resolver keeps XSD v2's independent
 finite constructor defaults; graph allowances do not silently enlarge them.
+Zero namespace and model-copy allowances select finite defaults of 1,000,000
+entries and 64 MiB; negative allowances are invalid. Inline resolver defaults
+are independently limited to 256 resources, 64 MiB cumulative identity/content
+bytes and 16 MiB per resource, inclusive. These work allowances do not measure
+exact heap use or bound prior caller allocations.
 The maintainer owns adoption, regression coverage and public dependency/release
 qualification; revisit on any supplier or parser-boundary change. Applications
 still own bounded cooperative custom resolvers and trusted diagnostic use.
@@ -68,7 +73,7 @@ still own bounded cooperative custom resolvers and trusted diagnostic use.
 | SSRF, filesystem access or credential forwarding in a supplied resolver | Application resolver owner; external access is explicit and denied without a resolver. | Allowlist resources, bound redirects/bytes/time, validate resolved addresses and avoid credential forwarding; review each new resolver or transport. |
 | Sensitive opt-in diagnostics | Application observability owner; detail is explicitly inspectable, not implicitly printed by WSDL wrappers. | Authorize/redact before logging, rendering or tracing; revisit when adding an error or diagnostic surface. |
 | Mutation of caller-owned models | Application owner; mutable models/builders require documented single-owner use, unlike immutable compiled lookup. | Avoid concurrent mutation and shared mutable aliases; revisit when changing cloning, builder or model ownership. |
-| Supplier and publication compromise | Maintainer; public Wire/XSD and pinned tooling are distinct trust boundaries. | Verify source/dependency pins, scanners, signed tags/assets and actual clean public consumption before release; revisit on any source, dependency or security advisory change. |
+| Supplier and publication compromise | Maintainer; public Wire/XSD and pinned tooling are distinct trust boundaries. | Verify source/dependency pins, scanners and signed tags/assets before publication, then actual clean public consumption before qualifying the release; revisit on any source, dependency or security advisory change. |
 
 These are conditional use obligations, not acceptance of a known High finding.
 Unknown scanner or release outcomes remain unqualified. Report suspected defects

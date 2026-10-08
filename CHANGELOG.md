@@ -1,10 +1,10 @@
 # Changelog
 
-## Unreleased
+## 3.0.0 - 2026-10-08
 
 ### Changed
 
-- Prepare WSDL v3 on main with the official `/v3` module and import suffix,
+- Publish WSDL v3 from main with the official `/v3` module and import suffix,
   adopting XML Schema `/v2` public types while retaining Wire `/v3`. Update
   WSDL and XSD imports together; schema documents, references, resolvers,
   compiler limits and compiled sets are not type-identical to older majors.
@@ -17,8 +17,8 @@
 
 ### Documentation
 
-- Align security and release guidance with published v2.0.0 while retaining
-  the pending XSD major adoption and historical v1 assessment boundaries.
+- Align security and migration guidance with published v3.0.0 and XSD v2
+  adoption while retaining historical v1 and v2 assessment boundaries.
 
 ## 2.0.0 - 2026-10-08
 

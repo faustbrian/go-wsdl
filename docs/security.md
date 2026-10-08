@@ -30,8 +30,8 @@ This behavior is included in public v2.0.0, not a guarantee of the
 published v1.0.0 release. This source selects public Wire v3 for XML parsing
 and serialization, with WSDL's document budget explicitly applied to charset
 conversion in both XML passes. Inspected Wire diagnostic types and sentinels
-use `/v3`; they are not type-identical to the v1 diagnostics. Main uses the
-`/v3` WSDL identity for the pending XSD v2 adoption, not a published v3 claim.
+use `/v3`; they are not type-identical to the v1 diagnostics. Public WSDL v3.0.0
+uses the `/v3` identity and adopts public XSD v2.0.0 named types.
 Direct inline parsing independently forwards namespace and model-copy work
 allowances; compiler schema parser allowances apply during the first root and
 imported WSDL parse, before following further WSDL references. XSD's inline
