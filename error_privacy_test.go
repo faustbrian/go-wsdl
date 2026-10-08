@@ -6,11 +6,11 @@ import (
 	"strings"
 	"testing"
 
-	wsdl "github.com/faustbrian/go-wsdl/v2"
-	"github.com/faustbrian/go-wsdl/v2/builder"
-	wsdlcompile "github.com/faustbrian/go-wsdl/v2/compile"
-	"github.com/faustbrian/go-wsdl/v2/compose"
-	"github.com/faustbrian/go-wsdl/v2/resolve"
+	wsdl "github.com/faustbrian/go-wsdl/v3"
+	"github.com/faustbrian/go-wsdl/v3/builder"
+	wsdlcompile "github.com/faustbrian/go-wsdl/v3/compile"
+	"github.com/faustbrian/go-wsdl/v3/compose"
+	"github.com/faustbrian/go-wsdl/v3/resolve"
 )
 
 func privacyCategory(t *testing.T, err error, want string) {

@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	wsdl "github.com/faustbrian/go-wsdl/v2"
-	wsdlcompile "github.com/faustbrian/go-wsdl/v2/compile"
+	wsdl "github.com/faustbrian/go-wsdl/v3"
+	wsdlcompile "github.com/faustbrian/go-wsdl/v3/compile"
 )
 
 var benchmarkWSDL = []byte(`<description xmlns="http://www.w3.org/ns/wsdl"` +

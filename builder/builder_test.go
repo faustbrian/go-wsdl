@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	wsdl "github.com/faustbrian/go-wsdl/v2"
-	"github.com/faustbrian/go-wsdl/v2/builder"
+	wsdl "github.com/faustbrian/go-wsdl/v3"
+	"github.com/faustbrian/go-wsdl/v3/builder"
 )
 
 func TestDescription20BuildsValidatedDocument(t *testing.T) {

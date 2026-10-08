@@ -1,6 +1,9 @@
 # XML Schema integration
 
 Embedded schemas are parsed by `xsd` and remain `*xsd.Document` values.
+Main's WSDL v3 candidate uses `github.com/faustbrian/go-xsd/v2` named types;
+public WSDL v2 uses the distinct XSD v1 types. See [migration](migration.md)
+for the publication boundary and finite admission defaults.
 `wsdl` never implements a competing schema type system. During compilation,
 inline schemas receive stable synthetic URIs, direct WSDL 2.0 schema imports
 are included, and `xsd/compile` builds the schema component set.
@@ -17,3 +20,9 @@ do not duplicate XML Schema parsing or instance validation.
 Schema resolution is configured separately from WSDL resolution. This keeps
 trust policy explicit and prevents a WSDL resolver from becoming an accidental
 general-purpose file or network loader.
+
+Inline parsing forwards `MaxSchemaNamespaceEntries` and `MaxSchemaModelBytes`
+from WSDL parse options. Compiler schema parser limits reach the first parse
+of every WSDL root/import, not only later schema compilation. The inline
+resolver independently admits at most 256 schema resources, 64 MiB of identity
+plus content bytes and 16 MiB per resource; graph limits do not raise them.

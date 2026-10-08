@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	wsdl "github.com/faustbrian/go-wsdl/v2"
+	wsdl "github.com/faustbrian/go-wsdl/v3"
 )
 
 func TestParseCanceledContextPrecedesMalformedXMLAdmission(t *testing.T) {

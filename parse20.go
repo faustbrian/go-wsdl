@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	xsd "github.com/faustbrian/go-xsd"
+	xsd "github.com/faustbrian/go-xsd/v2"
 )
 
 func decodeDescription20(
@@ -205,10 +205,12 @@ func decodeTypes20(ctx context.Context, node *xmlNode, options ParseOptions) (co
 			return Types20{}, fmt.Errorf("wsdl: serialize inline schema: %w", err)
 		}
 		schema, err := xsd.Parse(ctx, source, xsd.ParseOptions{
-			SystemID:         options.SystemID,
-			MaxDocumentBytes: options.MaxDocumentBytes,
-			MaxDepth:         options.MaxDepth,
-			MaxElements:      options.MaxElements,
+			SystemID:            options.SystemID,
+			MaxDocumentBytes:    options.MaxDocumentBytes,
+			MaxDepth:            options.MaxDepth,
+			MaxElements:         options.MaxElements,
+			MaxNamespaceEntries: options.MaxSchemaNamespaceEntries,
+			MaxModelBytes:       options.MaxSchemaModelBytes,
 		})
 		if err != nil {
 			return Types20{}, fmt.Errorf("wsdl: parse inline schema: %w", err)

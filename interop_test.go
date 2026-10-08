@@ -11,9 +11,9 @@ import (
 	"strings"
 	"testing"
 
-	wsdl "github.com/faustbrian/go-wsdl/v2"
-	wsdlcompile "github.com/faustbrian/go-wsdl/v2/compile"
-	xsdresolve "github.com/faustbrian/go-xsd/resolve"
+	wsdl "github.com/faustbrian/go-wsdl/v3"
+	wsdlcompile "github.com/faustbrian/go-wsdl/v3/compile"
+	xsdresolve "github.com/faustbrian/go-xsd/v2/resolve"
 )
 
 func TestExternalWSDL11InteroperabilityCorpus(t *testing.T) {

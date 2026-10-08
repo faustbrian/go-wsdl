@@ -5,7 +5,7 @@ import (
 	"encoding/xml"
 	"fmt"
 
-	xsd "github.com/faustbrian/go-xsd"
+	xsd "github.com/faustbrian/go-xsd/v2"
 )
 
 func decodeDefinitions11(root *xmlNode, state *parseState) (converted Definitions11, conversionErr error) {
@@ -332,10 +332,12 @@ func decodeTypes11(ctx context.Context, node *xmlNode, options ParseOptions) (co
 			return Types11{}, fmt.Errorf("wsdl: serialize inline schema: %w", err)
 		}
 		schema, err := xsd.Parse(ctx, source, xsd.ParseOptions{
-			SystemID:         options.SystemID,
-			MaxDocumentBytes: options.MaxDocumentBytes,
-			MaxDepth:         options.MaxDepth,
-			MaxElements:      options.MaxElements,
+			SystemID:            options.SystemID,
+			MaxDocumentBytes:    options.MaxDocumentBytes,
+			MaxDepth:            options.MaxDepth,
+			MaxElements:         options.MaxElements,
+			MaxNamespaceEntries: options.MaxSchemaNamespaceEntries,
+			MaxModelBytes:       options.MaxSchemaModelBytes,
 		})
 		if err != nil {
 			return Types11{}, fmt.Errorf("wsdl: parse inline schema: %w", err)

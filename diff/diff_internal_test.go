@@ -3,8 +3,8 @@ package diff
 import (
 	"testing"
 
-	wsdl "github.com/faustbrian/go-wsdl/v2"
-	wsdlcompile "github.com/faustbrian/go-wsdl/v2/compile"
+	wsdl "github.com/faustbrian/go-wsdl/v3"
+	wsdlcompile "github.com/faustbrian/go-wsdl/v3/compile"
 )
 
 func TestOperationIdentityIncludesNamedOutput(t *testing.T) {

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/faustbrian/go-wsdl/v2/codegen"
-	wsdlcompile "github.com/faustbrian/go-wsdl/v2/compile"
+	"github.com/faustbrian/go-wsdl/v3/codegen"
+	wsdlcompile "github.com/faustbrian/go-wsdl/v3/compile"
 )
 
 func TestBuildCreatesOwnedDeterministicGenerationModel(t *testing.T) {

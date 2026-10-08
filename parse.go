@@ -9,7 +9,7 @@ import (
 	"io"
 
 	"github.com/faustbrian/go-wire/v3/xmlwire"
-	"github.com/faustbrian/go-wsdl/v2/internal/errorprivacy"
+	"github.com/faustbrian/go-wsdl/v3/internal/errorprivacy"
 )
 
 const (
@@ -45,7 +45,14 @@ type ParseOptions struct {
 	MaxBindings      int
 	MaxEndpoints     int
 	MaxExtensions    int
-	SystemID         string
+	// MaxSchemaNamespaceEntries and MaxSchemaModelBytes independently bound
+	// each inline schema's owned namespace and model-string/copy work during
+	// its first parse. Zero selects XSD's finite defaults (1,000,000 entries
+	// and 64 MiB). Negative values are invalid. They are not heap limits and
+	// do not replace the enclosing WSDL document, tree, or schema-count limits.
+	MaxSchemaNamespaceEntries int
+	MaxSchemaModelBytes       int64
+	SystemID                  string
 }
 
 // Parse decodes one WSDL document without loading external resources.
@@ -65,7 +72,8 @@ func parse(ctx context.Context, source []byte, options ParseOptions) (*Document,
 		options.MaxAttributes < 0 || options.MaxTextBytes < 0 ||
 		options.MaxSchemas < 0 || options.MaxImports < 0 ||
 		options.MaxOperations < 0 || options.MaxBindings < 0 ||
-		options.MaxEndpoints < 0 || options.MaxExtensions < 0 {
+		options.MaxEndpoints < 0 || options.MaxExtensions < 0 ||
+		options.MaxSchemaNamespaceEntries < 0 || options.MaxSchemaModelBytes < 0 {
 		return nil, errors.New("wsdl: parse limits must not be negative")
 	}
 	if limit == 0 {

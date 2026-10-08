@@ -4,13 +4,13 @@
 
 | Package | Use |
 | --- | --- |
-| [`wsdl`](https://pkg.go.dev/github.com/faustbrian/go-wsdl/v2) | Parse, validate, serialize, and inspect WSDL 1.1 and WSDL 2.0 descriptions. |
-| [`builder`](https://pkg.go.dev/github.com/faustbrian/go-wsdl/v2/builder) | Build validated WSDL documents through a single-owner builder. |
-| [`codegen`](https://pkg.go.dev/github.com/faustbrian/go-wsdl/v2/codegen) | Derive a bounded, deterministic, language-neutral generation model from a compiled set. |
-| [`compile`](https://pkg.go.dev/github.com/faustbrian/go-wsdl/v2/compile) | Resolve imports and XML Schemas through injected resolvers and compile an immutable graph. |
-| [`compose`](https://pkg.go.dev/github.com/faustbrian/go-wsdl/v2/compose) | Merge compatible same-version, same-namespace WSDL documents with explicit conflict reporting. |
-| [`diff`](https://pkg.go.dev/github.com/faustbrian/go-wsdl/v2/diff) | Compare compiled sets conservatively for semantic compatibility. |
-| [`resolve`](https://pkg.go.dev/github.com/faustbrian/go-wsdl/v2/resolve) | Supply explicit deny-by-default or in-memory WSDL resource resolution policies. |
+| [`wsdl`](https://pkg.go.dev/github.com/faustbrian/go-wsdl/v3) | Parse, validate, serialize, and inspect WSDL 1.1 and WSDL 2.0 descriptions. |
+| [`builder`](https://pkg.go.dev/github.com/faustbrian/go-wsdl/v3/builder) | Build validated WSDL documents through a single-owner builder. |
+| [`codegen`](https://pkg.go.dev/github.com/faustbrian/go-wsdl/v3/codegen) | Derive a bounded, deterministic, language-neutral generation model from a compiled set. |
+| [`compile`](https://pkg.go.dev/github.com/faustbrian/go-wsdl/v3/compile) | Resolve imports and XML Schemas through injected resolvers and compile an immutable graph. |
+| [`compose`](https://pkg.go.dev/github.com/faustbrian/go-wsdl/v3/compose) | Merge compatible same-version, same-namespace WSDL documents with explicit conflict reporting. |
+| [`diff`](https://pkg.go.dev/github.com/faustbrian/go-wsdl/v3/diff) | Compare compiled sets conservatively for semantic compatibility. |
+| [`resolve`](https://pkg.go.dev/github.com/faustbrian/go-wsdl/v3/resolve) | Supply explicit deny-by-default or in-memory WSDL resource resolution policies. |
 
 All packages are in-process libraries. They start no background work, own no
 transport or service lifecycle, and require no shutdown. Use the root package
@@ -21,7 +21,7 @@ client for transport execution.
 
 ## Guides and project resources
 
-- [API reference](https://pkg.go.dev/github.com/faustbrian/go-wsdl/v2)
+- [API reference](https://pkg.go.dev/github.com/faustbrian/go-wsdl/v3)
 - [Executable example](../example_test.go)
 - [Versions and conformance](conformance.md)
 - [Specification decisions](specification-decisions.md)

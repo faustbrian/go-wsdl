@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	wsdl "github.com/faustbrian/go-wsdl/v2"
+	wsdl "github.com/faustbrian/go-wsdl/v3"
 )
 
 func TestWSDL20HTTPBindingRoundTrip(t *testing.T) {

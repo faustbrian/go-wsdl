@@ -31,7 +31,13 @@ published v1.0.0 release. This source selects public Wire v3 for XML parsing
 and serialization, with WSDL's document budget explicitly applied to charset
 conversion in both XML passes. Inspected Wire diagnostic types and sentinels
 use `/v3`; they are not type-identical to the v1 diagnostics. Main uses the
-`/v2` WSDL identity. The separate XSD major adoption remains pending.
+`/v3` WSDL identity for the pending XSD v2 adoption, not a published v3 claim.
+Direct inline parsing independently forwards namespace and model-copy work
+allowances; compiler schema parser allowances apply during the first root and
+imported WSDL parse, before following further WSDL references. XSD's inline
+resolver construction retains finite count, cumulative identity/content and
+per-resource byte limits. See [migration](migration.md) for defaults and the
+distinct nominal types and error classifications.
 The [versioned threat model](security-threat-model.md) identifies owned
 boundaries and conditional collaborator obligations; it is not release proof.
 

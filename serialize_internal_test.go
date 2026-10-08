@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	xsd "github.com/faustbrian/go-xsd"
+	xsd "github.com/faustbrian/go-xsd/v2"
 )
 
 var errInjectedWrite = errors.New("injected XML write failure")

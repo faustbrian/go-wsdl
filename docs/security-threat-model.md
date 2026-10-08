@@ -51,6 +51,17 @@ a public release or an arbitrary application's I/O policy.
 
 ## Conditional residual risks
 
+### Pending v3 supplier boundary
+
+Main's v3 candidate adopts XSD v2 named types. The v2 release scope above is
+historical and does not certify this candidate. Both direct inline parsers and
+compiler root/import first parses forward caller-selected finite namespace and
+model-copy allowances. The inline schema resolver keeps XSD v2's independent
+finite constructor defaults; graph allowances do not silently enlarge them.
+The maintainer owns adoption, regression coverage and public dependency/release
+qualification; revisit on any supplier or parser-boundary change. Applications
+still own bounded cooperative custom resolvers and trusted diagnostic use.
+
 | Risk | Owner and rationale | Mitigation and review condition |
 | --- | --- | --- |
 | Blocking or excessive collaborator work | Application owner; Go cannot preempt synchronous trusted resolver, XSD or standard-library operations. | Use bounded cooperative implementations and deployment budgets; revisit when a supplier or callback contract changes. |

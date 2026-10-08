@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	wsdlcompile "github.com/faustbrian/go-wsdl/v2/compile"
-	wsdldiff "github.com/faustbrian/go-wsdl/v2/diff"
+	wsdlcompile "github.com/faustbrian/go-wsdl/v3/compile"
+	wsdldiff "github.com/faustbrian/go-wsdl/v3/diff"
 )
 
 func TestCompareClassifiesInterfaceOperationChanges(t *testing.T) {

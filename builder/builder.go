@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	wsdl "github.com/faustbrian/go-wsdl/v2"
-	"github.com/faustbrian/go-wsdl/v2/internal/errorprivacy"
+	wsdl "github.com/faustbrian/go-wsdl/v3"
+	"github.com/faustbrian/go-wsdl/v3/internal/errorprivacy"
 )
 
 var ErrDuplicateComponent = errors.New("wsdl builder: duplicate component")

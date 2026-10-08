@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+### Changed
+
+- Prepare WSDL v3 on main with the official `/v3` module and import suffix,
+  adopting XML Schema `/v2` public types while retaining Wire `/v3`. Update
+  WSDL and XSD imports together; schema documents, references, resolvers,
+  compiler limits and compiled sets are not type-identical to older majors.
+- Apply independently selected inline-schema namespace and model-copy work
+  allowances during direct parsing and the compiler's first root/import
+  parse. Zero selects finite XSD defaults; negative allowances are invalid.
+  Preserve XSD's finite inline resolver constructor limits, including its
+  inclusive 256-schema resource allowance. See the migration guide before
+  adopting workloads previously admitted by XSD v1.
+
 ### Documentation
 
 - Align security and release guidance with published v2.0.0 while retaining

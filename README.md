@@ -5,7 +5,7 @@
 [![Coverage](https://img.shields.io/badge/coverage-100%25_required-blue)](CONTRIBUTING.md#verification)
 [![Mutation](https://img.shields.io/badge/mutation-100%25_required-blue)](CONTRIBUTING.md#verification)
 [![Documentation](https://img.shields.io/badge/docs-checked_in_CI-blue)](docs/)
-[![Go Reference](https://pkg.go.dev/badge/github.com/faustbrian/go-wsdl/v2.svg)](https://pkg.go.dev/github.com/faustbrian/go-wsdl/v2)
+[![Go Reference](https://pkg.go.dev/badge/github.com/faustbrian/go-wsdl/v3.svg)](https://pkg.go.dev/github.com/faustbrian/go-wsdl/v3)
 [![Release](https://img.shields.io/github/v/release/faustbrian/go-wsdl?sort=semver)](https://github.com/faustbrian/go-wsdl/releases)
 [![Go](https://img.shields.io/badge/go-1.27.0-00ADD8?logo=go)](https://go.dev/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -22,16 +22,16 @@ another consumer.
 
 ## Status
 
-Main prepares the v2 module and supports Go 1.27.0 or later. The public v2
-release is pending; published v1.0.0 retains its previous contracts.
+Main prepares the v3 module and supports Go 1.27.0 or later. Public v2.0.0
+is available; v3 publication remains pending until XSD v2 adoption is qualified.
 
 ## Installation
 
 ```sh
-go get github.com/faustbrian/go-wsdl/v2@v2.0.0
+go get github.com/faustbrian/go-wsdl/v3@v3.0.0
 ```
 
-Run this command after v2.0.0 is published. Import only the packages your
+Run this command after v3.0.0 is published. Import only the packages your
 application uses. The root `wsdl` package owns
 document parsing, validation, and shared description types; `compile` owns
 explicit resource resolution and immutable compiled graphs.
@@ -45,7 +45,7 @@ import (
     "context"
     "fmt"
 
-    wsdl "github.com/faustbrian/go-wsdl/v2"
+    wsdl "github.com/faustbrian/go-wsdl/v3"
 )
 
 func main() {
@@ -88,7 +88,7 @@ version-specific conformance, builders, composition, code generation,
 interoperability, and release evidence. Observable specification choices are
 recorded in the [decision register](docs/specification-decisions.md).
 
-Project resources include the [API reference](https://pkg.go.dev/github.com/faustbrian/go-wsdl/v2),
+Project resources include the [API reference](https://pkg.go.dev/github.com/faustbrian/go-wsdl/v3),
 [executable example](example_test.go), [testing guidance](CONTRIBUTING.md#verification),
 [FAQ](docs/faq.md), [troubleshooting](docs/faq.md#troubleshooting),
 [changelog](CHANGELOG.md), [license](LICENSE), [support](SUPPORT.md), and
@@ -105,8 +105,8 @@ and its
 
 ## Stability
 
-Each stable major follows semantic versioning. The v2 identity and its breaking
-default-error contract are described in [migration](docs/migration.md).
+Each stable major follows semantic versioning. The v3 identity, XSD adoption
+and retained v2 default-error contract are described in [migration](docs/migration.md).
 Supported behavior is recorded
 independently in the
 [WSDL 1.1 matrix](specification/requirements/wsdl-1.1.tsv) and

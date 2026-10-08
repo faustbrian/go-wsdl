@@ -13,12 +13,12 @@ import (
 	"sort"
 	"strconv"
 
-	wsdl "github.com/faustbrian/go-wsdl/v2"
-	"github.com/faustbrian/go-wsdl/v2/internal/errorprivacy"
-	"github.com/faustbrian/go-wsdl/v2/resolve"
-	xsd "github.com/faustbrian/go-xsd"
-	xsdcompile "github.com/faustbrian/go-xsd/compile"
-	xsdresolve "github.com/faustbrian/go-xsd/resolve"
+	wsdl "github.com/faustbrian/go-wsdl/v3"
+	"github.com/faustbrian/go-wsdl/v3/internal/errorprivacy"
+	"github.com/faustbrian/go-wsdl/v3/resolve"
+	xsd "github.com/faustbrian/go-xsd/v2"
+	xsdcompile "github.com/faustbrian/go-xsd/v2/compile"
+	xsdresolve "github.com/faustbrian/go-xsd/v2/resolve"
 )
 
 var escapeSchemaText = xml.EscapeText
@@ -486,6 +486,8 @@ func (c *Compiler) compile(ctx context.Context, root Source) (*Set, error) {
 	}
 	document, err := wsdl.Parse(ctx, root.Content, wsdl.ParseOptions{
 		SystemID: root.URI, MaxDocumentBytes: c.limits.MaxBytes,
+		MaxSchemaNamespaceEntries: c.schemaLimits.MaxParseNamespaceEntries,
+		MaxSchemaModelBytes:       c.schemaLimits.MaxParseModelBytes,
 	})
 	if err != nil {
 		return nil, err
@@ -573,6 +575,8 @@ func (s *compileState) resolveDocument(ctx context.Context, identity string, dep
 			}
 			document, err := wsdl.Parse(ctx, resolved.Content, wsdl.ParseOptions{
 				SystemID: resolved.URI, MaxDocumentBytes: s.compiler.limits.MaxBytes,
+				MaxSchemaNamespaceEntries: s.compiler.schemaLimits.MaxParseNamespaceEntries,
+				MaxSchemaModelBytes:       s.compiler.schemaLimits.MaxParseModelBytes,
 			})
 			if err != nil {
 				return err

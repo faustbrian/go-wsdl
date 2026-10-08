@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"testing"
 
-	wsdl "github.com/faustbrian/go-wsdl/v2"
-	xsd "github.com/faustbrian/go-xsd"
+	wsdl "github.com/faustbrian/go-wsdl/v3"
+	xsd "github.com/faustbrian/go-xsd/v2"
 )
 
 func TestMergeRejectsUnsupportedInternalVersion(t *testing.T) {

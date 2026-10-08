@@ -7,11 +7,11 @@ import (
 	"strings"
 	"testing"
 
-	wsdl "github.com/faustbrian/go-wsdl/v2"
-	"github.com/faustbrian/go-wsdl/v2/resolve"
-	xsd "github.com/faustbrian/go-xsd"
-	xsdcompile "github.com/faustbrian/go-xsd/compile"
-	xsdresolve "github.com/faustbrian/go-xsd/resolve"
+	wsdl "github.com/faustbrian/go-wsdl/v3"
+	"github.com/faustbrian/go-wsdl/v3/resolve"
+	xsd "github.com/faustbrian/go-xsd/v2"
+	xsdcompile "github.com/faustbrian/go-xsd/v2/compile"
+	xsdresolve "github.com/faustbrian/go-xsd/v2/resolve"
 )
 
 func TestBuildSetObservesModelCancellationAndRemainsReusable(t *testing.T) {

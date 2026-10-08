@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 
-	wsdl "github.com/faustbrian/go-wsdl/v2"
-	wsdlcompile "github.com/faustbrian/go-wsdl/v2/compile"
+	wsdl "github.com/faustbrian/go-wsdl/v3"
+	wsdlcompile "github.com/faustbrian/go-wsdl/v3/compile"
 )
 
 // ErrLimitExceeded identifies a generation model beyond configured bounds.

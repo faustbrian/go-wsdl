@@ -4,8 +4,8 @@ package wsdl
 import (
 	"context"
 
-	"github.com/faustbrian/go-wsdl/v2/internal/errorprivacy"
-	xsd "github.com/faustbrian/go-xsd"
+	"github.com/faustbrian/go-wsdl/v3/internal/errorprivacy"
+	xsd "github.com/faustbrian/go-xsd/v2"
 )
 
 // Version identifies a supported WSDL language version.

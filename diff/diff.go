@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	wsdl "github.com/faustbrian/go-wsdl/v2"
-	wsdlcompile "github.com/faustbrian/go-wsdl/v2/compile"
-	xsd "github.com/faustbrian/go-xsd"
+	wsdl "github.com/faustbrian/go-wsdl/v3"
+	wsdlcompile "github.com/faustbrian/go-wsdl/v3/compile"
+	xsd "github.com/faustbrian/go-xsd/v2"
 )
 
 // ChangeKind identifies how a compiled component changed.

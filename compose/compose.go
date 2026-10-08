@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"sort"
 
-	wsdl "github.com/faustbrian/go-wsdl/v2"
-	"github.com/faustbrian/go-wsdl/v2/internal/errorprivacy"
-	xsd "github.com/faustbrian/go-xsd"
+	wsdl "github.com/faustbrian/go-wsdl/v3"
+	"github.com/faustbrian/go-wsdl/v3/internal/errorprivacy"
+	xsd "github.com/faustbrian/go-xsd/v2"
 )
 
 var marshalSchema = xsd.Marshal
