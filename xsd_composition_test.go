@@ -33,10 +33,7 @@ func TestPublicXSDComposition(t *testing.T) {
 				schemas = value.Types.Schemas
 			} else if value, ok := document.Description20(); ok {
 				schemas = value.Types.Schemas
-				var references []xsd.SchemaReference = value.Types.Imports
-				if len(references) != 0 {
-					t.Fatal("unexpected schema import")
-				}
+				assertNoPublicSchemaReferences(t, value.Types.Imports)
 			}
 			if len(schemas) != 1 || schemas[0].Elements[0].Name != "Request" {
 				t.Fatal("inline schema composition lost the ordinary element")
@@ -57,10 +54,7 @@ func TestPublicXSDComposition(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			var compiled *xsdcompile.Set = set.Schemas()
-			if compiled == nil {
-				t.Fatal("compiled inline schemas missing")
-			}
+			assertPublicSchemaSet(t, set.Schemas())
 			encoded, err := wsdl.Marshal(document, wsdl.MarshalOptions{})
 			if err != nil {
 				t.Fatal(err)
@@ -69,6 +63,20 @@ func TestPublicXSDComposition(t *testing.T) {
 				t.Fatal("schema roundtrip failed:", err)
 			}
 		})
+	}
+}
+
+func assertNoPublicSchemaReferences(t *testing.T, references []xsd.SchemaReference) {
+	t.Helper()
+	if len(references) != 0 {
+		t.Fatal("unexpected schema import")
+	}
+}
+
+func assertPublicSchemaSet(t *testing.T, compiled *xsdcompile.Set) {
+	t.Helper()
+	if compiled == nil {
+		t.Fatal("compiled inline schemas missing")
 	}
 }
 
