@@ -14,7 +14,7 @@ on:
         default: false
         type: boolean
       root_coverage_diagnostic:
-        description: Collect root coverage evidence with reviewed development tooling
+        description: Collect root coverage evidence with reviewed pinned tooling
         required: false
         default: false
         type: boolean
@@ -26,10 +26,10 @@ permissions:
 jobs:
   ci:
     if: github.event_name != 'workflow_dispatch' || !inputs.root_coverage_diagnostic
-    uses: faustbrian/go-library-tools/.github/workflows/library-ci.yml@55c50f11cc9a33a5306d71cb3dac71a9c92ed13c # development source
+    uses: faustbrian/go-library-tools/.github/workflows/library-ci.yml@e79bb570d242fac90be99a6959e3b45de89279dd # v2.1.0
     with:
-      tooling_sha: 55c50f11cc9a33a5306d71cb3dac71a9c92ed13c
-      source_bootstrap: true
+      tooling_sha: e79bb570d242fac90be99a6959e3b45de89279dd
+      source_bootstrap: false
       public_dependencies: true
       release_dry_run: ${{ inputs.release_dry_run || false }}
 
@@ -82,15 +82,15 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: faustbrian/go-library-tools
-          ref: 55c50f11cc9a33a5306d71cb3dac71a9c92ed13c
+          ref: e79bb570d242fac90be99a6959e3b45de89279dd
           path: coverage-tooling
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
         timeout-minutes: 5
         with:
-          go-version: '1.27.0'
+          go-version-file: producer/.go-version
           cache: false
-      - name: Build development coverage tooling
+      - name: Build pinned coverage tooling
         timeout-minutes: 15
         working-directory: coverage-tooling
         run: go build -p 1 -trimpath -buildvcs=false -o "${GOTMPDIR}/golib" ./cmd/golib
