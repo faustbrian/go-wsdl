@@ -26,9 +26,9 @@ permissions:
 jobs:
   ci:
     if: github.event_name != 'workflow_dispatch' || !inputs.root_coverage_diagnostic
-    uses: faustbrian/go-library-tools/.github/workflows/library-ci.yml@e79bb570d242fac90be99a6959e3b45de89279dd # v2.1.0
+    uses: faustbrian/go-library-tools/.github/workflows/library-ci.yml@eff8b2127c361ee2f422123824a1d337cc277ac4 # v2.1.1
     with:
-      tooling_sha: e79bb570d242fac90be99a6959e3b45de89279dd
+      tooling_sha: eff8b2127c361ee2f422123824a1d337cc277ac4
       source_bootstrap: false
       public_dependencies: true
       release_dry_run: ${{ inputs.release_dry_run || false }}
@@ -82,7 +82,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: faustbrian/go-library-tools
-          ref: e79bb570d242fac90be99a6959e3b45de89279dd
+          ref: eff8b2127c361ee2f422123824a1d337cc277ac4
           path: coverage-tooling
           persist-credentials: false
       - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
