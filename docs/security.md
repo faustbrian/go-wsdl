@@ -12,8 +12,18 @@ Injected resolvers are the only external I/O seam. Production resolvers should
 allowlist schemes and hosts, reject private and link-local address changes,
 bound redirects and response bytes, and avoid forwarding credentials.
 
-Cancellation stops parsing and graph resolution. Returned models and compiled
-sets own their mutable slices so callers cannot mutate shared compiler state.
+Parsing and graph resolution observe cancellation cooperatively; injected
+collaborators must cooperate and cannot be forcibly preempted. Pass a non-nil
+context to Parse/Compile; nil can panic during the XML reader pass. Root model
+accessors are shallow and alias nested data. Compiled Set accessors return owned
+mutable copies without exposing shared compiler state.
+
+Budgets are phase-specific, not universal heap or hard-deadline ceilings.
+Validate caps retained diagnostics but continues traversal. Marshal bounds
+encoded output after namespace/model work; codegen may copy or construct
+collections before checking their final counts. Bound caller-created/mutated
+models and resolver response admission separately. Tree namespace inheritance
+can amplify working storage beyond lexical attribute counts.
 
 ## Default errors and explicit diagnostics (v2.0.0)
 

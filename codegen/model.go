@@ -1,5 +1,8 @@
-// Package codegen builds a bounded, transport-neutral generation model from
-// an immutable compiled WSDL graph. It does not generate source or perform I/O.
+// Package codegen uses Build to project an immutable compiled WSDL graph into
+// an owned mutable generation model. Collection limits cap accepted results,
+// not all intermediate copying/allocation. There is no context/cancellation API.
+// Naming, source emission, transport, credentials, files and workers remain
+// application-owned; generation candidates are not executable clients.
 package codegen
 
 import (
@@ -17,103 +20,171 @@ const defaultModelLimit = 100000
 
 // Limits bounds materialized generation-model collections.
 type Limits struct {
+	// MaxInterfaces caps returned interfaces count; zero selects 100,000, not a pre-allocation
+	// heap limit.
 	MaxInterfaces int
+	// MaxOperations caps returned operations count; zero selects 100,000, not a pre-allocation
+	// heap limit.
 	MaxOperations int
-	MaxParts      int
-	MaxFaults     int
-	MaxBindings   int
-	MaxServices   int
-	MaxEndpoints  int
-	MaxTypes      int
-	MaxElements   int
+	// MaxParts caps logical parts across Inputs/Outputs, excluding duplicated legacy
+	// Input/Output views; zero selects 100,000. It is not a pre-allocation heap limit.
+	MaxParts int
+	// MaxFaults caps returned faults count; zero selects 100,000, not a pre-allocation heap
+	// limit.
+	MaxFaults int
+	// MaxBindings caps returned bindings count; zero selects 100,000, not a pre-allocation
+	// heap limit.
+	MaxBindings int
+	// MaxServices caps returned services count; zero selects 100,000, not a pre-allocation
+	// heap limit.
+	MaxServices int
+	// MaxEndpoints caps returned endpoints count; zero selects 100,000, not a pre-allocation
+	// heap limit.
+	MaxEndpoints int
+	// MaxTypes caps returned types count; zero selects 100,000, not a pre-allocation heap
+	// limit.
+	MaxTypes int
+	// MaxElements caps returned elements count; zero selects 100,000, not a pre-allocation
+	// heap limit.
+	MaxElements int
 }
 
 // Options configures generation-model construction.
 type Options struct {
+	// Limits selects phase-specific collection budgets; zero fields select finite defaults.
 	Limits Limits
 }
 
 // Part is one generated message field candidate.
 type Part struct {
-	Name    string
+	// Name is the local component identifier in its owning symbol space.
+	Name string
+	// Element is the expanded XML Schema element reference; zero means no named element.
 	Element wsdl.QName
-	Type    wsdl.QName
+	// Type is the expanded XML Schema type reference; zero means no named type.
+	Type wsdl.QName
 }
 
 // Message is one generated operation payload candidate.
 type Message struct {
-	Label        string
-	Name         wsdl.QName
-	Element      wsdl.QName
+	// Label is the effective message-reference label, including WSDL default naming.
+	Label string
+	// Name is the expanded component identity; lexical prefixes are not identity.
+	Name wsdl.QName
+	// Element is the expanded XML Schema element reference; zero means no named element.
+	Element wsdl.QName
+	// ContentModel records the effective WSDL 2.0 payload model, not a wire encoder.
 	ContentModel wsdl.MessageContentModel
-	Parts        []Part
+	// Parts contains the WSDL 1.1 message parts in model order.
+	Parts []Part
 }
 
 // Fault is one generated operation error candidate.
 type Fault struct {
-	Name         wsdl.QName
-	Label        string
-	Direction    string
-	Message      wsdl.QName
-	Element      wsdl.QName
+	// Name is the expanded component identity; lexical prefixes are not identity.
+	Name wsdl.QName
+	// Label retains the fault-reference/message name; omitted WSDL 2.0 labels may be empty.
+	Label string
+	// Direction identifies the input/output role of this fault or RPC parameter.
+	Direction string
+	// Message is the expanded WSDL 1.1 abstract message reference.
+	Message wsdl.QName
+	// Element is the expanded XML Schema element reference; zero means no named element.
+	Element wsdl.QName
+	// ContentModel records the effective WSDL 2.0 payload model, not a wire encoder.
 	ContentModel wsdl.MessageContentModel
 }
 
 // Operation is one generated client or server method candidate.
 type Operation struct {
-	Name            string
-	Pattern         string
-	Style           string
-	Styles          []string
-	Safe            bool
-	RPCSignature    []wsdl.RPCSignatureParameter20
+	// Name is the local component identifier in its owning symbol space.
+	Name string
+	// Pattern is the message-exchange pattern IRI; unknown absolute IRIs remain extensible.
+	Pattern string
+	// Style records the operation/binding style, not an application serialization policy.
+	Style string
+	// Styles contains effective WSDL 2.0 style IRIs after interface defaults.
+	Styles []string
+	// Safe records the description's operation-safety assertion, not verified endpoint
+	// behavior.
+	Safe bool
+	// RPCSignature contains ordered expanded parameter names and RPC directions.
+	RPCSignature []wsdl.RPCSignatureParameter20
+	// RPCSignatureSet tracks explicit RPCSignature presence independently of its effective value.
 	RPCSignatureSet bool
-	Inputs          []Message
-	Outputs         []Message
-	Input           *Message
-	Output          *Message
-	Faults          []Fault
+	// Inputs contains input message references; retain order and explicit labels.
+	Inputs []Message
+	// Outputs contains output message references; retain order and explicit labels.
+	Outputs []Message
+	// Input is the optional first input message view; it does not imply an input exists.
+	Input *Message
+	// Output is the optional first output message view; it does not imply an output exists.
+	Output *Message
+	// Faults contains declared or referenced faults in this component's vocabulary.
+	Faults []Fault
 }
 
 // Interface groups generated operation candidates.
 type Interface struct {
-	Name       wsdl.QName
-	Extends    []wsdl.QName
+	// Name is the expanded component identity; lexical prefixes are not identity.
+	Name wsdl.QName
+	// Extends contains expanded parent-interface references, not inherited copies.
+	Extends []wsdl.QName
+	// Operations contains operation declarations or references in this component.
 	Operations []Operation
 }
 
 // Binding preserves the protocol association used by generated adapters.
 type Binding struct {
-	Name                wsdl.QName
-	Interface           wsdl.QName
-	Type                string
+	// Name is the expanded component identity; lexical prefixes are not identity.
+	Name wsdl.QName
+	// Interface is the expanded abstract interface reference; zero may mean unspecified.
+	Interface wsdl.QName
+	// Type records the WSDL 2.0 protocol binding IRI; WSDL 1.1 may leave it empty.
+	Type string
+	// OperationReferences retains complete bound-operation identity, including WSDL 1.1
+	// overload labels.
 	OperationReferences []wsdlcompile.OperationReference
 }
 
 // Endpoint preserves generated client endpoint metadata without transport behavior.
 type Endpoint struct {
-	Name    string
+	// Name is the local component identifier in its owning symbol space.
+	Name string
+	// Binding is the expanded concrete binding reference, not a transport instance.
 	Binding wsdl.QName
+	// Address is endpoint-description text; it is never contacted or trusted as an allowlist.
 	Address string
 }
 
 // Service groups generated endpoint candidates.
 type Service struct {
-	Name      wsdl.QName
+	// Name is the expanded component identity; lexical prefixes are not identity.
+	Name wsdl.QName
+	// Interface is the expanded abstract interface reference; zero may mean unspecified.
 	Interface wsdl.QName
+	// Endpoints contains described endpoint metadata without owning connections.
 	Endpoints []Endpoint
 }
 
 // Model is an owned deterministic input for optional source generators.
 type Model struct {
+	// Interfaces contains abstract interface declarations, not executable clients.
 	Interfaces []Interface
-	Bindings   []Binding
-	Services   []Service
-	Types      []wsdl.QName
-	Elements   []wsdl.QName
+	// Bindings contains concrete protocol-description bindings, not runtime adapters.
+	Bindings []Binding
+	// Services contains service declarations and their described endpoints.
+	Services []Service
+	// Types contains expanded named simple/complex XSD type identities.
+	Types []wsdl.QName
+	// Elements contains expanded global XML Schema element names available to generators.
+	Elements []wsdl.QName
 }
 
-// Build creates an owned, bounded generation model without performing I/O.
+// Build rejects nil sets/negative limits and returns independent mutable model
+// storage in compiled order. Zero limits select 100,000 entries per collection.
+// Some accessor copies and collection construction precede count checks; limits
+// are not pre-allocation heap ceilings. No partial model is returned on failure.
 func Build(set *wsdlcompile.Set, options Options) (*Model, error) {
 	if set == nil {
 		return nil, errors.New("wsdl codegen: compiled set is nil")
@@ -123,6 +194,8 @@ func Build(set *wsdlcompile.Set, options Options) (*Model, error) {
 		return nil, err
 	}
 	model := &Model{}
+	// Set accessors return owned copies before generation-specific count checks.
+	// These limits constrain accepted models, not every intermediate allocation.
 	interfaces := set.Interfaces()
 	if err := within("interfaces", len(interfaces), limits.MaxInterfaces); err != nil {
 		return nil, err

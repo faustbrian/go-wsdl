@@ -213,6 +213,8 @@ func (m marshalValue) operation11(encoder tokenEncoder, value Operation11) error
 			}
 			return m.operationMessage11(encoder, "output", *value.Output)
 		}
+		// WSDL11-DEC-002: output-before-input distinguishes solicit-response from
+		// request-response; sorting these children would change abstract semantics.
 		if value.Style == OperationStyleSolicitResponse {
 			if err := encodeOutput(); err != nil {
 				return err

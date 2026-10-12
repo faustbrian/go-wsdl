@@ -1326,6 +1326,9 @@ func decodeSOAPBoolean20(
 	return nil
 }
 
+// WSDL20-DEC-002/005 retain typed adjunct values and presence. Once decoded,
+// remove them from the opaque extension bag to avoid emitting the same property
+// twice. Unknown foreign data remains opaque, not an installed handler.
 func consumeExtensibility20(
 	node *xmlNode,
 	value *Extensibility,

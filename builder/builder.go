@@ -1,4 +1,7 @@
-// Package builder constructs validated WSDL documents without XML parsing.
+// Package builder accumulates WSDL 1.1/2.0 models through New11 or New20.
+// Add/Set operations borrow nested storage and builders are not concurrency-safe.
+// Build delegates to root validation and XML marshal/reparse canonicalization;
+// it does not bypass parsing or own resource resolution, transport or workers.
 package builder
 
 import (
@@ -9,9 +12,11 @@ import (
 	"github.com/faustbrian/go-wsdl/v3/internal/errorprivacy"
 )
 
+// ErrDuplicateComponent identifies a repeated builder component name, even with identical content.
 var ErrDuplicateComponent = errors.New("wsdl builder: duplicate component")
 
-// Description20 constructs one WSDL 2.0 description.
+// Description20 is a mutable WSDL 2.0 builder. Construct with New20; zero-value
+// named additions fail. Nested inputs remain borrowed across reuse; synchronize calls.
 type Description20 struct {
 	value      wsdl.Description20
 	interfaces map[string]struct{}
@@ -109,7 +114,8 @@ func (b *Description20) Build(options wsdl.ValidationOptions) (*wsdl.Document, e
 	return wsdl.NewDocument20(b.value, options)
 }
 
-// Definitions11 constructs one WSDL 1.1 definitions document.
+// Definitions11 is a mutable WSDL 1.1 builder. Construct with New11; zero-value
+// named additions fail. Nested inputs remain borrowed across reuse; synchronize calls.
 type Definitions11 struct {
 	value     wsdl.Definitions11
 	messages  map[string]struct{}

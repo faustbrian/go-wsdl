@@ -18,6 +18,8 @@ var benchmarkWSDL = []byte(`<description xmlns="http://www.w3.org/ns/wsdl"` +
 	`<endpoint name="Endpoint" binding="tns:Binding" address="https://example.test"/>` +
 	`</service></description>`)
 
+// BenchmarkParseWSDL measures both XML passes and model conversion for one fixed
+// small WSDL 2.0 payload, not hostile-input allocation bounds or fleet throughput.
 func BenchmarkParseWSDL(b *testing.B) {
 	for b.Loop() {
 		if _, err := wsdl.Parse(context.Background(), benchmarkWSDL, wsdl.ParseOptions{}); err != nil {
@@ -26,6 +28,8 @@ func BenchmarkParseWSDL(b *testing.B) {
 	}
 }
 
+// BenchmarkMarshalWSDL excludes initial Parse and measures default-budget deterministic
+// encoding of the fixed in-memory model, without network or file IO.
 func BenchmarkMarshalWSDL(b *testing.B) {
 	document, err := wsdl.Parse(context.Background(), benchmarkWSDL, wsdl.ParseOptions{})
 	if err != nil {
@@ -39,6 +43,8 @@ func BenchmarkMarshalWSDL(b *testing.B) {
 	}
 }
 
+// BenchmarkCompileWSDL excludes New but includes root parsing and complete compilation
+// of a small no-import graph; it does not measure resolver/transport latency.
 func BenchmarkCompileWSDL(b *testing.B) {
 	compiler, err := wsdlcompile.New(wsdlcompile.Options{})
 	if err != nil {

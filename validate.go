@@ -13,12 +13,20 @@ const defaultMaxDiagnostics = 1000
 
 // ValidationOptions controls semantic validation of one parsed document.
 type ValidationOptions struct {
-	MaxDiagnostics       int
+	// MaxDiagnostics caps retained diagnostics; zero selects 1,000; negative reports an
+	// options error. Traversal continues after saturation.
+	MaxDiagnostics int
+	// UnderstoodExtensions lists expanded required-extension names accepted semantically, not
+	// handlers.
 	UnderstoodExtensions []QName
 }
 
 // Validate checks the semantic constraints and component references in a
-// parsed WSDL document. It never resolves imports or reads external resources.
+// parsed WSDL document. It borrows stable mutable model storage and never resolves
+// imports or reads external resources. MaxDiagnostics caps retained messages only:
+// traversal continues and later diagnostics are silently omitted. There is no
+// context/work budget or schema compilation. Nil returns a diagnostic; a zero
+// Document has no version model to check and is not thereby certified marshalable.
 func Validate(document *Document, options ValidationOptions) Diagnostics {
 	if options.MaxDiagnostics < 0 {
 		collector := diagnosticCollector{max: 1}
@@ -246,6 +254,8 @@ type diagnosticCollector struct {
 	diagnostics Diagnostics
 }
 
+// Saturation drops later diagnostics but does not stop validation loops. This
+// retained-result cap must not be described as a traversal or heap budget.
 func (c *diagnosticCollector) add(diagnostic Diagnostic) {
 	if len(c.diagnostics) >= c.max {
 		return

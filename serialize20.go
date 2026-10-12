@@ -8,6 +8,9 @@ import (
 	xsd "github.com/faustbrian/go-xsd/v2"
 )
 
+// WSDL20-DEC-002 keeps optional-property presence separate from effective
+// values. Emission helpers preserve explicit empty/default attributes where
+// represented; lexical XML identity is not promised by WSDL-DEC-005.
 func (m marshalValue) description20(encoder tokenEncoder, value Description20) error {
 	attributes := namespaceAttributes(m.prefixes)
 	attributes = append(attributes, xml.Attr{

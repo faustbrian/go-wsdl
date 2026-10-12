@@ -453,6 +453,9 @@ func decodePortType11(node *xmlNode) (converted PortType11, conversionErr error)
 	return portType, nil
 }
 
+// WSDL 1.1 Note section 2.4 permits overloaded operation names. Preserve both
+// message-reference labels in parser identity (WSDL11-DEC-004); name-only keys
+// would reject distinguishable overloads before semantic default-name validation.
 func operationSignature11(operation Operation11) string {
 	input, output := "", ""
 	if operation.Input != nil {

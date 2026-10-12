@@ -34,28 +34,51 @@ var decoderToken = func(decoder *xml.Decoder) (xml.Token, error) {
 
 // ParseOptions controls bounded parsing of one caller-supplied document.
 type ParseOptions struct {
+	// MaxDocumentBytes bounds supplied bytes and each charset-conversion pass; zero selects 8
+	// MiB.
 	MaxDocumentBytes int64
-	MaxDepth         int
-	MaxElements      int
-	MaxAttributes    int
-	MaxTextBytes     int64
-	MaxSchemas       int
-	MaxImports       int
-	MaxOperations    int
-	MaxBindings      int
-	MaxEndpoints     int
-	MaxExtensions    int
+	// MaxDepth bounds XML element depth; zero selects 256.
+	MaxDepth int
+	// MaxElements bounds XML element count; zero selects 100,000.
+	MaxElements int
+	// MaxAttributes bounds cumulative XML attributes; zero selects 1,000,000.
+	MaxAttributes int
+	// MaxTextBytes bounds decoded character-data bytes; zero selects 8 MiB.
+	MaxTextBytes int64
+	// MaxSchemas bounds inline schemas per document; zero selects 64.
+	MaxSchemas int
+	// MaxImports bounds import/include elements per document; zero selects 4,096.
+	MaxImports int
+	// MaxOperations bounds operation elements per document; zero selects 10,000.
+	MaxOperations int
+	// MaxBindings bounds binding elements per document; zero selects 10,000.
+	MaxBindings int
+	// MaxEndpoints bounds port/endpoint elements per document; zero selects 10,000.
+	MaxEndpoints int
+	// MaxExtensions bounds foreign elements/attributes counted at core boundaries; zero
+	// selects 10,000.
+	MaxExtensions int
 	// MaxSchemaNamespaceEntries and MaxSchemaModelBytes independently bound
 	// each inline schema's owned namespace and model-string/copy work during
 	// its first parse. Zero selects XSD's finite defaults (1,000,000 entries
 	// and 64 MiB). Negative values are invalid. They are not heap limits and
 	// do not replace the enclosing WSDL document, tree, or schema-count limits.
 	MaxSchemaNamespaceEntries int
-	MaxSchemaModelBytes       int64
-	SystemID                  string
+	// MaxSchemaModelBytes bounds each inline schema's model-string/copy work; zero selects
+	// XSD's 64 MiB default.
+	MaxSchemaModelBytes int64
+	// SystemID is caller-supplied source identity used for URI bases/diagnostics, not
+	// authorization.
+	SystemID string
 }
 
-// Parse decodes one WSDL document without loading external resources.
+// Parse borrows source until return, decodes one owned mutable WSDL model and
+// resolves only lexical URI references. It does not perform full semantic
+// validation or resource loading; use Validate/compile for those phases.
+// Context must be non-nil: valid XML can panic in the second-pass reader when
+// nil is supplied. Cancellation is cooperative, including a completion check,
+// not a deadline on every upstream XML/charset operation. Errors return no model
+// and use a fixed category while retaining inspectable typed causes.
 func Parse(ctx context.Context, source []byte, options ParseOptions) (*Document, error) {
 	document, err := parse(ctx, source, options)
 	if err == nil && ctx != nil {
@@ -121,6 +144,8 @@ func parse(ctx context.Context, source []byte, options ParseOptions) (*Document,
 	charsetReader := func(label string, input io.Reader) (io.Reader, error) {
 		return xmlwire.CharsetReaderWithLimit(label, input, limit)
 	}
+	// Both XML passes share the document-sized charset allowance; a declared
+	// vendor encoding must not evade the raw-byte boundary through expansion.
 	if _, err := xmlwire.Root(source, xmlwire.DecodeOptions{
 		MaxBytes: limit, MaxDepth: options.MaxDepth, CharsetReader: charsetReader,
 	}); err != nil {

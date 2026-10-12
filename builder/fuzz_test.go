@@ -9,6 +9,8 @@ import (
 	"github.com/faustbrian/go-wsdl/v3/builder"
 )
 
+// FuzzBuilderRoundTrip exercises caller names/versions and duplicate refusal before
+// canonical model round trips; it does not execute generated clients or resolvers.
 func FuzzBuilderRoundTrip(f *testing.F) {
 	f.Add(byte(11), "Service", "urn:fuzz", "Operation", false)
 	f.Add(byte(20), "API", "urn:fuzz", "Operation", true)

@@ -4,16 +4,23 @@ package wsdl
 type Severity string
 
 const (
-	SeverityError   Severity = "error"
+	// SeverityError makes a retained diagnostic contribute to Diagnostics.Err.
+	SeverityError Severity = "error"
+	// SeverityWarning records an issue without by itself making Diagnostics.Err non-nil.
 	SeverityWarning Severity = "warning"
 )
 
 // Diagnostic describes one bounded parsing, validation, or compilation issue.
 type Diagnostic struct {
-	Code     string
+	// Code identifies the diagnostic or protocol fault code in the owning vocabulary.
+	Code string
+	// Severity controls whether this retained diagnostic contributes to HasErrors.
 	Severity Severity
-	Message  string
-	Path     string
+	// Message contains inspectable input-derived detail excluded from Diagnostics.Error.
+	Message string
+	// Path identifies the component/diagnostic boundary and may contain caller data.
+	Path string
+	// Location records decoder source-position metadata, not a trusted resource boundary.
 	Location Location
 }
 

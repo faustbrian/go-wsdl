@@ -19,12 +19,21 @@ const defaultMaxOutputBytes int64 = 8 << 20
 
 // MarshalOptions controls deterministic WSDL serialization.
 type MarshalOptions struct {
-	MaxBytes      int64
-	Indent        string
+	// MaxBytes bounds encoded output bytes; zero selects 8 MiB; negative is invalid, and model
+	// prework is not capped.
+	MaxBytes int64
+	// Indent selects XML indentation passed to Wire; empty emits unindented XML.
+	Indent string
+	// IncludeHeader requests an XML declaration before the document element.
 	IncludeHeader bool
 }
 
-// Marshal serializes a WSDL document deterministically without external I/O.
+// Marshal borrows a stable model and emits deterministic package-selected XML,
+// not original bytes or a W3C canonical-XML profile. Nil/empty documents and
+// negative limits fail; zero MaxBytes selects 8 MiB. Output-limit errors return
+// no partial payload. Prefix/model work precedes encoded-byte checks, so the
+// output budget is not a heap/work bound. There is no context API or validation
+// of every semantic reference; unsafe raw extension XML is rejected.
 func Marshal(document *Document, options MarshalOptions) ([]byte, error) {
 	payload, err := marshal(document, options)
 	return payload, errorprivacy.Wrap("wsdl: marshal failed", err)

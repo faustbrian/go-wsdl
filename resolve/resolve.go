@@ -1,5 +1,9 @@
 // Package resolve defines explicit resource resolution for WSDL graphs.
-// Parsing never invokes a Resolver.
+// Parsing never invokes a Resolver. Start with Deny, NewMemory or an injected
+// policy resolver. URI identity does not authorize schemes, hosts or redirects.
+// Built-ins require non-nil contexts and own no files, connections or workers.
+// Memory copies input/returned bytes; Chain borrows child implementations and
+// cannot preempt callbacks or make them concurrency-safe.
 package resolve
 
 import (
@@ -30,21 +34,31 @@ const (
 
 // Request identifies a resource after base-URI resolution.
 type Request struct {
-	URI       string
+	// URI is the resource identity, not a filesystem path or network authorization decision.
+	URI string
+	// Namespace is the namespace URI used in expanded identity, not a lexical prefix.
 	Namespace string
-	Kind      Kind
-	Version   string
+	// Kind identifies the resource edge or component category, not a protocol action.
+	Kind Kind
+	// Version identifies the applicable language or protocol version of this component.
+	Version string
 }
 
 // Resource is an owned WSDL resource. Resolver implementations must not
 // reuse Content storage across calls.
 type Resource struct {
-	URI     string
+	// URI is the resource identity, not a filesystem path or network authorization decision.
+	URI string
+	// Content contains caller-supplied resource bytes; keep them stable while consumed.
 	Content []byte
 }
 
 // Resolver obtains caller-authorized WSDL resources.
 type Resolver interface {
+	// Resolve receives a non-nil context and exact resolved identity. Implementations
+	// own scheme/host/redirect/credential policy, finite response admission and context
+	// cooperation. Return owned Content that remains stable; compilation requires
+	// Resource.URI to equal Request.URI exactly, not just identify an equivalent URL.
 	Resolve(context.Context, Request) (Resource, error)
 }
 
@@ -66,7 +80,10 @@ type Memory struct {
 }
 
 // NewMemory copies resources into an immutable resolver. Keys must be valid,
-// absolute resource URIs without fragments.
+// absolute resource URIs without fragments. Keys are stored as url.URL.String
+// output and Resolve looks up the requested string exactly. The complete input
+// is copied without a separate count/byte cap; callers bound admission and keep
+// maps/bytes stable until return. Nil input constructs an empty resolver.
 func NewMemory(resources map[string][]byte) (*Memory, error) {
 	owned := make(map[string][]byte, len(resources))
 	for identity, content := range resources {
@@ -98,7 +115,8 @@ func (r *Memory) Resolve(ctx context.Context, request Request) (Resource, error)
 
 // Chain returns a resolver that tries children in order. Only ErrNotFound
 // advances to the next resolver while the context remains active; policy and
-// operational errors stop.
+// operational errors stop. The child list is copied; implementations are borrowed.
+// Literal nil children are skipped, but typed-nil collaborators are not detected.
 func Chain(resolvers ...Resolver) Resolver {
 	return chain{resolvers: append([]Resolver(nil), resolvers...)}
 }

@@ -1,4 +1,8 @@
-// Package compose merges same-version, same-namespace WSDL documents.
+// Package compose uses Merge to combine same-version, same-namespace documents
+// without resource resolution or service execution. Inputs remain borrowed and
+// stable while merging/canonicalizing; successful output owns separate mutable
+// model storage. Duplicate top-level names conflict even when contents agree.
+// Work has no context API or independent aggregate input-memory budget.
 package compose
 
 import (
@@ -16,30 +20,42 @@ import (
 var marshalSchema = xsd.Marshal
 
 var (
-	ErrEmpty     = errors.New("wsdl compose: no documents")
-	ErrVersion   = errors.New("wsdl compose: version mismatch")
+	// ErrEmpty means Merge received no documents.
+	ErrEmpty = errors.New("wsdl compose: no documents")
+	// ErrVersion identifies different or unsupported WSDL language versions.
+	ErrVersion = errors.New("wsdl compose: version mismatch")
+	// ErrNamespace identifies different target namespaces; Merge does not bridge them.
 	ErrNamespace = errors.New("wsdl compose: namespace mismatch")
-	ErrConflict  = errors.New("wsdl compose: component conflict")
+	// ErrConflict identifies repeated top-level names, not just differing definitions.
+	ErrConflict = errors.New("wsdl compose: component conflict")
 )
 
 // Conflict identifies one duplicated top-level WSDL component.
 type Conflict struct {
+	// Kind identifies the resource edge or component category, not a protocol action.
 	Kind string
+	// Name is the local component identifier in its owning symbol space.
 	Name string
 }
 
 // ConflictError reports all deterministic composition conflicts.
 type ConflictError struct {
+	// Conflicts contains sorted duplicate identities and can expose input-derived names.
 	Conflicts []Conflict
 }
 
+// Error returns only the fixed conflict category; inspect Conflicts explicitly for details.
 func (e *ConflictError) Error() string {
 	return ErrConflict.Error()
 }
 
+// Is supports errors.Is with ErrConflict without exposing conflicting names.
 func (e *ConflictError) Is(target error) bool { return target == ErrConflict }
 
-// Merge composes documents independently of input order.
+// Merge rejects empty/nil, mixed-version/namespace and duplicate top-level
+// identities, even for equal definitions. Successful results are canonicalized
+// under root defaults with deterministic component ordering. Keep nested input
+// stable; import/include deduplication uses lexical locations, not resolver identity.
 func Merge(documents ...*wsdl.Document) (*wsdl.Document, error) {
 	if len(documents) == 0 {
 		return nil, ErrEmpty

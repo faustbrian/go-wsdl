@@ -20,3 +20,8 @@ the generic extension bag.
 Construct documents with `NewDocument11` or `NewDocument20` when starting from
 Go values. Constructors validate the caller model, marshal and reparse it to
 take ownership, then validate the canonical result.
+
+Root model accessors return shallow copies: slices, pointers and inline XSD
+models still alias the document. Synchronize mutation and keep models stable
+during operations. `Documentation.Markup` is not populated by Parse or emitted
+by Marshal; documentation XML markup is not a lexical round-trip contract.

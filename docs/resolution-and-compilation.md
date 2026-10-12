@@ -13,5 +13,7 @@ document count, and component count. It then validates and returns an immutable
 bindings, services, endpoints, and the compiled `xsd` set.
 
 All accessors return owned slices and nested message data. The set is safe for
-concurrent lookup. Resolvers must implement their own network, redirect, file,
+concurrent lookup; concurrent compilation also requires concurrency-safe borrowed
+resolvers. WSDL URI cycles reuse known resources; inheritance cycles are rejected.
+Resolvers must implement their own network, redirect, file,
 host, and credential policy; core never adds an implicit fallback.

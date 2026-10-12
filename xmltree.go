@@ -507,6 +507,7 @@ func readXMLNode(
 			if state.textBytes > state.options.MaxTextBytes {
 				return nil, fmt.Errorf("%w: text bytes exceed %d", ErrLimitExceeded, state.options.MaxTextBytes)
 			}
+			// encoding/xml may reuse token storage; retained mixed content must own it.
 			text := append([]byte(nil), value...)
 			node.text.Write(text)
 			node.content = append(node.content, xmlContent{text: text})
@@ -518,6 +519,9 @@ func readXMLNode(
 	}
 }
 
+// Namespace bindings are copied per node, not shared mutable maps. MaxAttributes
+// counts lexical attributes, not every inherited entry: depth/fanout and namespace
+// declarations can amplify working storage within the finite tree budgets.
 func inheritNamespaces(node *xmlNode, inherited map[string]string, owner ...*parseState) {
 	if parseOwnerError(owner) != nil {
 		return

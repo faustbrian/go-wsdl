@@ -1,4 +1,6 @@
-// Package errorprivacy separates safe default categories from opt-in causes.
+// Package errorprivacy wraps causes with caller-supplied fixed categories, not
+// content sanitization. Wrap owns no handles/workers; causes remain borrowed and
+// inspectable through Unwrap, including input/credential-bearing text.
 package errorprivacy
 
 // Wrap retains an inspectable cause without including its text in Error.

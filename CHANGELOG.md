@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Documentation
+
+- Clarify mutable model access, builder borrowing, compiler/resolver ownership,
+  nil-context and diagnostic privacy contracts without runtime changes.
+- Distinguish phase-specific result/output limits from pre-allocation, traversal
+  and hard-deadline guarantees; retain existing protocol decisions and pins.
+
 ## 3.0.0 - 2026-10-08
 
 ### Changed

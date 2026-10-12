@@ -1,4 +1,9 @@
-// Package compile resolves and compiles bounded WSDL document graphs.
+// Package compile uses New to create a reusable WSDL 1.1/2.0 graph compiler.
+// It borrows WSDL/XSD resolvers; literal nil defaults deny external access.
+// Each Compile owns invocation-local traversal state and publishes an immutable
+// Set only after owned phases complete. Resolvers own transport, credential,
+// response-size and context-cooperation policy; calls are not forcibly preempted.
+// No implicit file/network fallback, cgo or background workers are introduced.
 package compile
 
 import (
@@ -57,29 +62,47 @@ const (
 
 // Limits bounds graph resolution and component construction.
 type Limits struct {
-	MaxDocuments  int
-	MaxDepth      int
+	// MaxDocuments bounds unique WSDL resources, including root; zero selects 256.
+	MaxDocuments int
+	// MaxDepth bounds first-visit WSDL graph depth, root at one; zero selects 64.
+	MaxDepth int
+	// MaxReferences bounds import/include edges, including revisits; zero selects 4,096.
 	MaxReferences int
-	MaxBytes      int64
+	// MaxBytes bounds cumulative WSDL content bytes; zero selects 64 MiB, not a resolver
+	// allocation cap.
+	MaxBytes int64
+	// MaxComponents bounds constructed and inherited graph components; zero selects 100,000.
 	MaxComponents int
 }
 
 // Options configures an immutable Compiler. A nil Resolver denies every load.
 type Options struct {
-	Resolver       resolve.Resolver
+	// Resolver is the borrowed WSDL resolver; literal nil selects Deny, not an implicit
+	// fallback.
+	Resolver resolve.Resolver
+	// SchemaResolver is the separately borrowed XSD resolver; literal nil denies external
+	// schemas.
 	SchemaResolver xsdresolve.Resolver
-	Limits         Limits
-	SchemaLimits   xsdcompile.Limits
-	Validation     wsdl.ValidationOptions
+	// Limits selects phase-specific collection budgets; zero fields select finite defaults.
+	Limits Limits
+	// SchemaLimits controls XSD compilation and first-parse inline schema allowances.
+	SchemaLimits xsdcompile.Limits
+	// Validation selects local WSDL validation; its understood-extension list is copied by
+	// New.
+	Validation wsdl.ValidationOptions
 }
 
 // Source is the caller-owned root WSDL resource.
 type Source struct {
-	URI     string
+	// URI is the resource identity, not a filesystem path or network authorization decision.
+	URI string
+	// Content contains caller-supplied resource bytes; keep them stable while consumed.
 	Content []byte
 }
 
-// Compiler is immutable and safe for concurrent use.
+// Compiler has immutable options after New; concurrent Compile also requires
+// concurrency-safe borrowed resolvers. Zero-value compilers are not initialized.
+// Cancellation belongs to one traversal and does not poison reuse.
 type Compiler struct {
 	resolver       resolve.Resolver
 	schemaResolver xsdresolve.Resolver
@@ -136,90 +159,140 @@ func cloneValidationOptions(value wsdl.ValidationOptions) wsdl.ValidationOptions
 
 // Document describes one resolved WSDL resource.
 type Document struct {
-	URI          string
-	Namespace    string
-	Version      wsdl.Version
+	// URI is the resource identity, not a filesystem path or network authorization decision.
+	URI string
+	// Namespace is the namespace URI used in expanded identity, not a lexical prefix.
+	Namespace string
+	// Version identifies the applicable language or protocol version of this component.
+	Version wsdl.Version
+	// Dependencies contains sorted referenced WSDL identities; duplicate edges may remain.
 	Dependencies []string
 }
 
-// Part is one immutable compiled WSDL 1.1 message part.
+// Part is one owned compiled WSDL 1.1 message part.
 type Part struct {
-	Name    string
+	// Name is the local component identifier in its owning symbol space.
+	Name string
+	// Element is the expanded XML Schema element reference; zero means no named element.
 	Element wsdl.QName
-	Type    wsdl.QName
+	// Type is the expanded XML Schema type reference; zero means no named type.
+	Type wsdl.QName
 }
 
-// Message is one immutable compiled operation message.
+// Message is one owned compiled operation message.
 type Message struct {
-	Label        string
-	Name         wsdl.QName
-	Element      wsdl.QName
+	// Label is the effective message-reference label, including WSDL default naming.
+	Label string
+	// Name is the expanded component identity; lexical prefixes are not identity.
+	Name wsdl.QName
+	// Element is the expanded XML Schema element reference; zero means no named element.
+	Element wsdl.QName
+	// ContentModel records the effective WSDL 2.0 payload model, not a wire encoder.
 	ContentModel wsdl.MessageContentModel
-	Parts        []Part
+	// Parts contains the WSDL 1.1 message parts in model order.
+	Parts []Part
 }
 
-// Fault is one immutable compiled operation fault reference.
+// Fault is one owned compiled operation fault reference.
 type Fault struct {
-	Name         wsdl.QName
-	Label        string
-	Direction    string
-	Message      wsdl.QName
-	Element      wsdl.QName
+	// Name is the expanded component identity; lexical prefixes are not identity.
+	Name wsdl.QName
+	// Label retains the fault-reference/message name; omitted WSDL 2.0 labels may be empty.
+	Label string
+	// Direction identifies the input/output role of this fault or RPC parameter.
+	Direction string
+	// Message is the expanded WSDL 1.1 abstract message reference.
+	Message wsdl.QName
+	// Element is the expanded XML Schema element reference; zero means no named element.
+	Element wsdl.QName
+	// ContentModel records the effective WSDL 2.0 payload model, not a wire encoder.
 	ContentModel wsdl.MessageContentModel
 }
 
-// Operation is one immutable compiled interface operation.
+// Operation is one owned compiled interface operation.
 type Operation struct {
-	Name            string
-	Pattern         string
-	Style           string
-	Styles          []string
-	Safe            bool
-	RPCSignature    []wsdl.RPCSignatureParameter20
+	// Name is the local component identifier in its owning symbol space.
+	Name string
+	// Pattern is the message-exchange pattern IRI; unknown absolute IRIs remain extensible.
+	Pattern string
+	// Style records the operation/binding style, not an application serialization policy.
+	Style string
+	// Styles contains effective WSDL 2.0 style IRIs after interface defaults.
+	Styles []string
+	// Safe records the description's operation-safety assertion, not verified endpoint
+	// behavior.
+	Safe bool
+	// RPCSignature contains ordered expanded parameter names and RPC directions.
+	RPCSignature []wsdl.RPCSignatureParameter20
+	// RPCSignatureSet tracks explicit RPCSignature presence independently of its effective value.
 	RPCSignatureSet bool
-	Inputs          []Message
-	Outputs         []Message
-	Input           *Message
-	Output          *Message
-	Faults          []Fault
+	// Inputs contains input message references; retain order and explicit labels.
+	Inputs []Message
+	// Outputs contains output message references; retain order and explicit labels.
+	Outputs []Message
+	// Input is the optional first input message view; it does not imply an input exists.
+	Input *Message
+	// Output is the optional first output message view; it does not imply an output exists.
+	Output *Message
+	// Faults contains declared or referenced faults in this component's vocabulary.
+	Faults []Fault
 }
 
-// Interface is one immutable compiled abstract interface.
+// Interface is one owned compiled abstract interface.
 type Interface struct {
-	Name       wsdl.QName
-	Extends    []wsdl.QName
+	// Name is the expanded component identity; lexical prefixes are not identity.
+	Name wsdl.QName
+	// Extends contains expanded parent-interface references, not inherited copies.
+	Extends []wsdl.QName
+	// Operations contains operation declarations or references in this component.
 	Operations []Operation
-	Faults     []wsdl.QName
+	// Faults contains declared or referenced faults in this component's vocabulary.
+	Faults []wsdl.QName
 }
 
 // OperationReference identifies one bound operation, including WSDL 1.1
 // overload-disambiguating input and output names.
 type OperationReference struct {
-	Name   string
-	Input  string
+	// Name is the local component identifier in its owning symbol space.
+	Name string
+	// Input is the effective WSDL 1.1 input-reference name used for overload identity.
+	Input string
+	// Output is the effective WSDL 1.1 output-reference name used for overload identity.
 	Output string
 }
 
-// Binding is one immutable compiled interface binding.
+// Binding is one owned compiled interface binding.
 type Binding struct {
-	Name                wsdl.QName
-	Interface           wsdl.QName
-	Type                string
-	Operations          []string
+	// Name is the expanded component identity; lexical prefixes are not identity.
+	Name wsdl.QName
+	// Interface is the expanded abstract interface reference; zero may mean unspecified.
+	Interface wsdl.QName
+	// Type records the WSDL 2.0 protocol binding IRI; WSDL 1.1 may leave it empty.
+	Type string
+	// Operations contains operation declarations or references in this component.
+	Operations []string
+	// OperationReferences retains complete bound-operation identity, including WSDL 1.1
+	// overload labels.
 	OperationReferences []OperationReference
 }
 
-// Endpoint is one immutable compiled service endpoint.
+// Endpoint is one owned compiled service endpoint.
 type Endpoint struct {
-	Name    string
+	// Name is the local component identifier in its owning symbol space.
+	Name string
+	// Binding is the expanded concrete binding reference, not a transport instance.
 	Binding wsdl.QName
+	// Address is endpoint-description text; it is never contacted or trusted as an allowlist.
 	Address string
 }
 
-// Service is one immutable compiled service.
+// Service is one owned compiled service.
 type Service struct {
-	Name      wsdl.QName
+	// Name is the expanded component identity; lexical prefixes are not identity.
+	Name wsdl.QName
+	// Interface is the expanded abstract interface reference; zero may mean unspecified.
 	Interface wsdl.QName
+	// Endpoints contains described endpoint metadata without owning connections.
 	Endpoints []Endpoint
 }
 
@@ -280,7 +353,9 @@ func (s *Set) Interface(name wsdl.QName) (Interface, bool) {
 	return cloneInterface(s.interfaces[index]), true
 }
 
-// Operation returns one owned operation from a named interface.
+// Operation returns one owned operation only when its name is unambiguous.
+// Nil/missing sets and overloaded WSDL 1.1 names return zero/false; use
+// OperationBySignature for complete input/output label identity.
 func (s *Set) Operation(interfaceName wsdl.QName, name string) (Operation, bool) {
 	interfaceValue, ok := s.Interface(interfaceName)
 	if !ok {
@@ -464,7 +539,12 @@ type compileState struct {
 	references int
 }
 
-// Compile parses, resolves, validates, and compiles one bounded WSDL graph.
+// Compile borrows root.Content until return and requires a non-nil context and
+// absolute fragment-free root.URI. It resolves only through injected seams;
+// resource responses must preserve the requested identity exactly. WSDL cycles
+// reuse known resources, while invalid interface inheritance is rejected.
+// Limits do not preempt or bound allocation inside arbitrary resolvers. Nil
+// contexts can reach root Parse panic paths; errors publish no partial Set.
 func (c *Compiler) Compile(ctx context.Context, root Source) (*Set, error) {
 	set, err := c.compile(ctx, root)
 	return set, errorprivacy.Wrap("wsdl compile: failed", err)
@@ -540,6 +620,9 @@ func (s *compileState) resolveDocument(ctx context.Context, identity string, dep
 			return fmt.Errorf("%w: reference has no absolute URI", ErrResourceIdentity)
 		}
 		resource.dependencies = append(resource.dependencies, reference.uri)
+		// WSDL URI cycles/repeated imports reuse the invocation's known resource;
+		// edge budgets still count revisits. This is not interface-inheritance
+		// cycle handling, which is validated separately after component assembly.
 		if existing, ok := s.resources[reference.uri]; ok {
 			if err := validateReference(reference, existing.document, resource.document); err != nil {
 				return err

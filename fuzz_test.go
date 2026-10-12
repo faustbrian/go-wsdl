@@ -16,6 +16,8 @@ var fuzzParseOptions = wsdl.ParseOptions{
 	MaxTextBytes:     1 << 20,
 }
 
+// FuzzParseRoundTrip exercises supplied hostile XML under explicit tree/byte budgets;
+// accepted round trips preserve version, not original bytes or full conformance.
 func FuzzParseRoundTrip(f *testing.F) {
 	f.Add([]byte(`<definitions xmlns="http://schemas.xmlsoap.org/wsdl/" targetNamespace="urn:fuzz"/>`))
 	f.Add([]byte(`<description xmlns="http://www.w3.org/ns/wsdl" targetNamespace="urn:fuzz"/>`))
@@ -40,6 +42,8 @@ func FuzzParseRoundTrip(f *testing.F) {
 	})
 }
 
+// FuzzModelRoundTrip exercises caller-created WSDL 1.1/2.0 names through constructors
+// and bounded canonical serialization; only admitted models must be deterministic.
 func FuzzModelRoundTrip(f *testing.F) {
 	f.Add(byte(11), "Service", "urn:fuzz", "Operation")
 	f.Add(byte(20), "API", "urn:fuzz", "Operation")

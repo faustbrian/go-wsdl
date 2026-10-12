@@ -15,7 +15,8 @@ document.
 `compose.Merge` combines same-version documents with the same target namespace.
 It sorts components and extensions deterministically, deduplicates imports,
 includes, and schemas, and returns a structured `ConflictError` for components
-with the same identity but different content. Inputs remain caller-owned.
+with a repeated top-level identity, even when content is identical. Inputs
+remain caller-owned.
 
 Composition does not resolve imports and does not silently merge different
 namespaces or WSDL versions.

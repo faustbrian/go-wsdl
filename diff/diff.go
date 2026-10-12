@@ -1,4 +1,8 @@
-// Package diff compares immutable compiled WSDL component graphs.
+// Package diff uses Compare for conservative structural comparison of compiled
+// WSDL component graphs. Nil sets act as empty graphs. It owns returned report
+// slices but no transport, resolver or background work; there is no context API
+// or independent report-size limit. It is not wire interoperability proof, and
+// extension/schema/application policy can remain unknown even with no changes.
 package diff
 
 import (
@@ -17,8 +21,11 @@ import (
 type ChangeKind string
 
 const (
-	ChangeAdded    ChangeKind = "added"
-	ChangeRemoved  ChangeKind = "removed"
+	// ChangeAdded identifies a structural component present only in the new set.
+	ChangeAdded ChangeKind = "added"
+	// ChangeRemoved identifies a structural component absent from the new set.
+	ChangeRemoved ChangeKind = "removed"
+	// ChangeModified identifies changed properties of an existing component.
 	ChangeModified ChangeKind = "modified"
 )
 
@@ -26,23 +33,33 @@ const (
 type Compatibility string
 
 const (
-	CompatibilityBreaking    Compatibility = "breaking"
+	// CompatibilityBreaking classifies a structural change expected to disrupt existing consumers.
+	CompatibilityBreaking Compatibility = "breaking"
+	// CompatibilityNonBreaking marks conservatively source-compatible changes, not wire-safety proof.
 	CompatibilityNonBreaking Compatibility = "non-breaking"
-	CompatibilityUnknown     Compatibility = "unknown"
+	// CompatibilityUnknown requires application or protocol interpretation beyond the compared structure.
+	CompatibilityUnknown Compatibility = "unknown"
 )
 
 // Change describes one deterministic semantic graph difference.
 type Change struct {
-	Path          string
-	Kind          ChangeKind
+	// Path identifies the component/diagnostic boundary and may contain caller data.
+	Path string
+	// Kind identifies an added, removed or modified structural component.
+	Kind ChangeKind
+	// Compatibility is a conservative structural classification, not wire compatibility proof.
 	Compatibility Compatibility
-	Before        string
-	After         string
+	// Before contains the compared prior value; it may contain input-derived text.
+	Before string
+	// After contains the compared replacement value; it may contain input-derived text.
+	After string
 }
 
 // Report is a semantic change set plus interpretation caveats.
 type Report struct {
+	// Changes contains the owned changes sorted by path and change kind.
 	Changes []Change
+	// Caveats records interpretation limits that apply even when Changes is empty.
 	Caveats []string
 }
 
