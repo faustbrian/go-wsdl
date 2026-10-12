@@ -3,6 +3,6 @@ module github.com/faustbrian/go-wsdl/v3
 go 1.27.0
 
 require (
-	github.com/faustbrian/go-wire/v3 v3.0.0
+	github.com/faustbrian/go-wire/v3 v3.0.1
 	github.com/faustbrian/go-xsd/v2 v2.0.0
 )
