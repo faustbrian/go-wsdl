@@ -28,7 +28,7 @@ XML-reader panic boundary.
 
 Budgets are phase-specific, not universal heap or hard-deadline ceilings.
 Validate caps retained diagnostics but continues traversal. Marshal bounds
-encoded output after namespace/model work; codegen may copy or construct
+encoded output after namespace/model work; code generation may copy or construct
 collections before checking their final counts. Bound caller-created/mutated
 models and resolver response admission separately. Tree namespace inheritance
 can amplify working storage beyond lexical attribute counts.
