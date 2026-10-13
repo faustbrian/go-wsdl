@@ -1,5 +1,7 @@
 # Extensions
 
+[Documentation index](README.md)
+
 Foreign namespace attributes and elements are preserved on extensible WSDL
 components. Expanded names avoid prefix confusion. Element payload bytes are
 bounded by document, text, element, depth, and extension-count limits.

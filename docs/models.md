@@ -1,5 +1,7 @@
 # Models and source locations
 
+[Documentation index](README.md)
+
 `Document` contains exactly one `Definitions11` or `Description20`. Versioned
 types expose the corresponding component vocabulary instead of flattening
 incompatible WSDL versions into one lossy structure.

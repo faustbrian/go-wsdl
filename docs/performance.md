@@ -1,5 +1,7 @@
 # Performance
 
+[Documentation index](README.md)
+
 `make benchmark` records parse, marshal, and compile allocations and latency in
 `benchmark.txt`. Benchmarks use a fixed valid description and fail if a named
 benchmark disappears. They are correctness-gated by the normal test suite.

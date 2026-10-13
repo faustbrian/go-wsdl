@@ -1,5 +1,7 @@
 # Resolution and compilation
 
+[Documentation index](README.md)
+
 `compile.New` creates an immutable reusable compiler. A nil WSDL or schema
 resolver becomes a deny resolver, so the default performs no network or file
 access. Supply `resolve.Memory`, a policy-wrapped custom resolver, and a

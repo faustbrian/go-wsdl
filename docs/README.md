@@ -1,5 +1,7 @@
 # Documentation
 
+[Package README](../README.md)
+
 ## Package map
 
 | Package | Use |
@@ -50,3 +52,13 @@ client for transport execution.
 - [License](../LICENSE)
 - [Support](../SUPPORT.md)
 - [Security reporting](../SECURITY.md#reporting)
+
+## Ecosystem navigation
+
+See the [versioned Golib ecosystem index](https://github.com/faustbrian/go-library-tools/blob/v1.8.4/docs/ecosystem/README.md) for package
+selection, explicit ownership, and compatibility guidance.
+
+## Additional guides and reference
+
+- [WSDL security threat model](security-threat-model.md)
+- [Source documentation audit](source-documentation-audit.md)

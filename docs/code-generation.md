@@ -1,5 +1,7 @@
 # Code generation model
 
+[Documentation index](README.md)
+
 Package `codegen` converts a compiled set into an owned deterministic model
 containing interfaces, operations, input/output payloads, message parts,
 faults, bindings, services, endpoints, schema types, and elements. Independent

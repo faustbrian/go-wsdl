@@ -1,5 +1,7 @@
 # SOAP bindings
 
+[Documentation index](README.md)
+
 WSDL 1.1 models SOAP 1.1 and 1.2 binding, operation, body, header,
 header-fault, fault, and address extensions. Presence of action, style, use,
 namespace, encoding styles, body parts, and SOAP 1.2 action-required is

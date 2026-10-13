@@ -1,5 +1,7 @@
 # Security and limits
 
+[Documentation index](README.md)
+
 The XML reader rejects DTDs and custom entity declarations. Parsing and
 serialization bound bytes, depth, elements, attributes, text, schemas,
 imports, operations, bindings, endpoints, extensions, diagnostics, and output.

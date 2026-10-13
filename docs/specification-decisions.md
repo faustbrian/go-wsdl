@@ -1,5 +1,7 @@
 # WSDL specification decisions
 
+[Documentation index](README.md)
+
 This register records observable choices where WSDL 1.1, WSDL 2.0, their
 schemas and adjuncts, XML processing, or the Go host environment leave more
 than one credible implementation. WSDL 1.1 and WSDL 2.0 are separate feature

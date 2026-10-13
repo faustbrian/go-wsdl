@@ -1,5 +1,7 @@
 # Module identity reviews
 
+[Documentation index](README.md)
+
 ## 2026-09-03 public proxy reconciliation
 
 At this review, the WSDL module retained its `go-wire` and `go-xsd` v1.0.0

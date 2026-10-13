@@ -1,5 +1,7 @@
 # FAQ
 
+[Documentation index](README.md)
+
 ## Does parsing download imports?
 
 No. Parsing is byte-local. Compilation resolves only through explicitly

@@ -1,5 +1,7 @@
 # HTTP and MIME bindings
 
+[Documentation index](README.md)
+
 WSDL 1.1 HTTP support models binding verbs, operation locations,
 URL-encoded/URL-replacement input, and endpoint addresses. MIME support models
 content media types, XML parts, and multipart/related groups. Validation checks

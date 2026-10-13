@@ -1,5 +1,7 @@
 # WSDL security threat model
 
+[Documentation index](README.md)
+
 Model version: 2.0.0. Reviewed scope: public v3.0.0, 2026-10-08.
 Owner: Brian Faust, WSDL maintainer. The signed v3.0.0 release is published;
 actual clean public consumption includes XSD v2 composition.

@@ -1,5 +1,7 @@
 # Migration
 
+[Documentation index](README.md)
+
 Public v3.0.0 is available from main. Pin a released version, review the
 [changelog](../CHANGELOG.md), and evaluate semantic diffs when upgrading.
 Construct documents through `NewDocument11` or `NewDocument20`; do not depend

@@ -1,5 +1,7 @@
 # Validation
 
+[Documentation index](README.md)
+
 `Validate` performs local semantic validation without I/O. It checks component
 references, operation styles and MEPs, message labels and fault directions,
 message parts, SOAP bodies/headers/faults, HTTP and MIME properties, endpoint

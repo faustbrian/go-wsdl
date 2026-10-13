@@ -1,5 +1,7 @@
 # Parsing and deterministic generation
 
+[Documentation index](README.md)
+
 `Parse` consumes only the supplied byte slice. It rejects DTDs and directives,
 uses strict XML decoding, validates QName and NCName syntax, rejects duplicate
 symbols, resolves only lexical `xml:base` identities, and enforces all parse

@@ -1,5 +1,7 @@
 # Builders and composition
 
+[Documentation index](README.md)
+
 `builder.New11` and `builder.New20` provide zero-I/O programmatic construction.
 Add methods reject duplicate top-level component names. `Build` delegates to
 the canonical document constructors, so invalid references or binding

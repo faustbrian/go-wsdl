@@ -1,5 +1,7 @@
 # XML Schema integration
 
+[Documentation index](README.md)
+
 Embedded schemas are parsed by `xsd` and remain `*xsd.Document` values.
 Main's WSDL v3 candidate uses `github.com/faustbrian/go-xsd/v2` named types;
 public WSDL v2 uses the distinct XSD v1 types. See [migration](migration.md)

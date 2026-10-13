@@ -1,5 +1,7 @@
 # Versions and conformance
 
+[Documentation index](README.md)
+
 WSDL 1.1 targets the W3C Note dated 15 March 2001. WSDL 2.0 targets the Core
 and Adjuncts Recommendations dated 26 June 2007; the Additional MEPs Note is
 tracked separately. Exact bytes and URLs are in `specification/manifest.tsv`.

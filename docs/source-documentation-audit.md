@@ -1,5 +1,7 @@
 # Source documentation audit
 
+[Documentation index](README.md)
+
 ## Scope and reproduction
 
 Tier A source documentation pass from `fb0ede53d9fc40efdce2174437f9c371b0d84df5`. Reproduce the complete

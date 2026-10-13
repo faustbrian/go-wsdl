@@ -1,5 +1,7 @@
 # Interoperability
 
+[Documentation index](README.md)
+
 Round-trip tests cover WSDL 1.1 SOAP 1.1/1.2, HTTP, MIME, imports, embedded
 schemas, and WSDL 2.0 Core/SOAP/HTTP adjunct forms. The requirement matrices
 link each current executable claim.

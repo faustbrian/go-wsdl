@@ -1,5 +1,7 @@
 # Semantic compatibility
 
+[Documentation index](README.md)
+
 Observable interpretation and wire-format choices are compatibility contracts
 recorded in the [specification decision register](specification-decisions.md).
 A changed resolved decision requires explicit compatibility and changelog

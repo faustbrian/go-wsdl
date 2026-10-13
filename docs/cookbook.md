@@ -1,5 +1,7 @@
 # Cookbook
 
+[Documentation index](README.md)
+
 ## Parse without resolution
 
 ```go
