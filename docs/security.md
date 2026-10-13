@@ -16,9 +16,15 @@ bound redirects and response bytes, and avoid forwarding credentials.
 
 Parsing and graph resolution observe cancellation cooperatively; injected
 collaborators must cooperate and cannot be forcibly preempted. Pass a non-nil
-context to Parse/Compile; nil can panic during the XML reader pass. Root model
-accessors are shallow and alias nested data. Compiled Set accessors return owned
-mutable copies without exposing shared compiler state.
+context to Parse/Compile; nil fails admission with the fixed default category
+and no document or compiled set. Invalid options and supplied-byte admission
+retain their existing precedence. Root model accessors are shallow and alias
+nested data. Compiled Set accessors return owned mutable copies without exposing
+shared compiler state.
+
+Published v3.0.0 predates the nil-context admission fix. Choose a release
+containing that fix when relying on nil rejection rather than the former
+XML-reader panic boundary.
 
 Budgets are phase-specific, not universal heap or hard-deadline ceilings.
 Validate caps retained diagnostics but continues traversal. Marshal bounds

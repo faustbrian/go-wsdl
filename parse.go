@@ -75,10 +75,11 @@ type ParseOptions struct {
 // Parse borrows source until return, decodes one owned mutable WSDL model and
 // resolves only lexical URI references. It does not perform full semantic
 // validation or resource loading; use Validate/compile for those phases.
-// Context must be non-nil: valid XML can panic in the second-pass reader when
-// nil is supplied. Cancellation is cooperative, including a completion check,
-// not a deadline on every upstream XML/charset operation. Errors return no model
-// and use a fixed category while retaining inspectable typed causes.
+// Nil contexts fail admission without publishing a model. Existing invalid-option
+// and supplied-byte-limit failures retain precedence. Cancellation is cooperative,
+// including a completion check, not a deadline on every upstream XML/charset
+// operation. Errors return no model and use a fixed category while retaining
+// inspectable causes.
 func Parse(ctx context.Context, source []byte, options ParseOptions) (*Document, error) {
 	document, err := parse(ctx, source, options)
 	if err == nil && ctx != nil {
@@ -136,10 +137,11 @@ func parse(ctx context.Context, source []byte, options ParseOptions) (*Document,
 		return nil, fmt.Errorf("%w: document bytes exceed %d", ErrLimitExceeded, limit)
 	}
 
-	if ctx != nil {
-		if err := ctx.Err(); err != nil {
-			return nil, err
-		}
+	if ctx == nil {
+		return nil, errors.New("wsdl: context must not be nil")
+	}
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
 	charsetReader := func(label string, input io.Reader) (io.Reader, error) {
 		return xmlwire.CharsetReaderWithLimit(label, input, limit)

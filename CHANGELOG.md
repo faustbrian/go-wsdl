@@ -2,12 +2,40 @@
 
 ## Unreleased
 
+## 3.0.1 - 2026-10-13
+
+Recorded as a prepared candidate on this date; public availability requires the
+v3.0.1 tag and corresponding release. Adopt
+`github.com/faustbrian/go-wsdl/v3@v3.0.1` after publication to receive the nil-context
+admission fix. The `/v3` API identity, Go 1.27.0 module minimum, Wire v3.0.0 and
+XSD v2.0.0 dependencies remain unchanged; a v3.0.0 requirement alone does not
+select this patch.
+
+### Fixed
+
+- Reject nil Parse/Compile contexts with the existing fixed failure categories
+  and no document or compiled set instead of panicking during XML admission.
+  Invalid-option and supplied-byte-limit precedence, cooperative cancellation
+  and resolver ownership remain unchanged; use a real context for parsing and
+  compilation. No new public error type is introduced.
+
 ### Documentation
 
 - Clarify mutable model access, builder borrowing, compiler/resolver ownership,
   nil-context and diagnostic privacy contracts without runtime changes.
 - Distinguish phase-specific result/output limits from pre-allocation, traversal
   and hard-deadline guarantees; retain existing protocol decisions and pins.
+
+### Source
+
+- Documentation, contract clarification and published-adoption navigation, not
+  additional runtime changes: [b0edebd0a9](https://github.com/faustbrian/go-wsdl/commit/b0edebd0a9a514b00e999371954fd2740456d99b), [b3884cff13](https://github.com/faustbrian/go-wsdl/commit/b3884cff1376aba859581ffad48c5ed3afff5e5e), [3d9a8de093](https://github.com/faustbrian/go-wsdl/commit/3d9a8de0938c8235fe4effa40f566f2e3fb90b98).
+- Verification and bounded assurance: native fuzz-target ownership, qualified
+  test-graph tooling, shared-verifier updates and source-documentation enforcement.
+  Development/CI selects Go 1.27.2; the module minimum remains Go 1.27.0:
+  [56b25c8d89](https://github.com/faustbrian/go-wsdl/commit/56b25c8d89ee33edf4d216cc867e3a1dd4273570), [d47e3e0ebc](https://github.com/faustbrian/go-wsdl/commit/d47e3e0ebcb441b7876ff7a8d8df99ea4ac3a222), [99f45f31d3](https://github.com/faustbrian/go-wsdl/commit/99f45f31d3cb0b310e113b421fdd18de5d85dc2e), [2485ea5587](https://github.com/faustbrian/go-wsdl/commit/2485ea5587d855097fd2e959e7f78eedb938ca40), [fb0ede53d9](https://github.com/faustbrian/go-wsdl/commit/fb0ede53d9fc40efdce2174437f9c371b0d84df5), [382b1d7fac](https://github.com/faustbrian/go-wsdl/commit/382b1d7facbd6f627efb53de173edc66da12c588).
+- Shared risk-based governance only: [4218f109e8](https://github.com/faustbrian/go-wsdl/commit/4218f109e8a67bb34089bf2d74df65aa9a898b10).
+- Updater coverage for owned non-Go dependencies only: [62e24ab6ab](https://github.com/faustbrian/go-wsdl/commit/62e24ab6ab555c5bd5c7f41d124a9526fcecc015).
 
 ## 3.0.0 - 2026-10-08
 

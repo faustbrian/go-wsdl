@@ -544,7 +544,7 @@ type compileState struct {
 // resource responses must preserve the requested identity exactly. WSDL cycles
 // reuse known resources, while invalid interface inheritance is rejected.
 // Limits do not preempt or bound allocation inside arbitrary resolvers. Nil
-// contexts can reach root Parse panic paths; errors publish no partial Set.
+// contexts fail root Parse admission; errors publish no partial Set.
 func (c *Compiler) Compile(ctx context.Context, root Source) (*Set, error) {
 	set, err := c.compile(ctx, root)
 	return set, errorprivacy.Wrap("wsdl compile: failed", err)
